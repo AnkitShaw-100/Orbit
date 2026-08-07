@@ -1,0 +1,38 @@
+{
+  "name": "orbit-backend",
+  "version": "1.0.0",
+  "description": "Orbit — real-time crypto paper trading API",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.1",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
+    "jose": "^6.2.8",
+    "morgan": "^1.11.0",
+    "pg": "^8.22.0",
+    "ws": "^8.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "prisma": "^7.9.1"
+  }
+}

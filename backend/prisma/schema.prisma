@@ -1,0 +1,101 @@
+// Orbit — Phase 1 schema
+// Mirrors Orbit_Database_Design_Document_v1.md (sections 4, 5 and 8).
+// Live prices are never persisted; portfolio value and unrealized P&L are
+// computed at read time from the in-memory Binance price cache.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7: connection URLs live in prisma.config.ts (for migrations) and in
+// the driver adapter passed to PrismaClient (for runtime queries).
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  FILLED
+}
+
+/// Profile mirror of a Supabase auth user. `id` is the Supabase user id
+/// (auth.users.id) rather than a value we generate, so every foreign key below
+/// points at the same identity Supabase issued tokens for. Credentials live in
+/// Supabase and are never stored here.
+model User {
+  id        String   @id @db.Uuid
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  wallet       Wallet?
+  portfolios   Portfolio[]
+  orders       Order[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  balance   Decimal  @default(100000.00) @db.Decimal(18, 8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model Portfolio {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  symbol       String
+  quantity     Decimal  @db.Decimal(24, 8)
+  averagePrice Decimal  @map("average_price") @db.Decimal(24, 8)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Unique rather than a plain index: one holding row per user per symbol is
+  // what makes the buy-side upsert in the trading engine safe.
+  @@unique([userId, symbol])
+  @@map("portfolios")
+}
+
+model Order {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  symbol         String
+  side           OrderSide
+  quantity       Decimal     @db.Decimal(24, 8)
+  executionPrice Decimal     @map("execution_price") @db.Decimal(24, 8)
+  total          Decimal     @db.Decimal(24, 8)
+  status         OrderStatus @default(FILLED)
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction Transaction?
+
+  @@index([userId, createdAt])
+  @@map("orders")
+}
+
+model Transaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @unique @map("order_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  symbol      String
+  realizedPnl Decimal? @map("realized_pnl") @db.Decimal(24, 8)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("transactions")
+}
