@@ -1,5 +1,5 @@
-import "dotenv/config";
-import { defineConfig } from "prisma/config";
+require("dotenv/config");
+const { defineConfig } = require("prisma/config");
 
 // Used by the Prisma CLI only (migrate, db push, studio, introspect).
 // Runtime queries go through the pg driver adapter in src/lib/prisma.js.
@@ -24,7 +24,7 @@ if (!url && needsDatabase) {
   );
 }
 
-export default defineConfig({
+module.exports = defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
