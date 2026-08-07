@@ -30,6 +30,16 @@ const env = {
 
   clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
 
+  // Any additional origins allowed to call the API, comma separated.
+  extraOrigins: (process.env.EXTRA_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+
+  // Vercel project slug, so branch and pull-request preview URLs are allowed
+  // without listing each one. Leave unset to allow only CLIENT_URL.
+  vercelProject: process.env.VERCEL_PROJECT ?? null,
+
   /**
    * How many markets Orbit lists. The set isn't hardcoded — it's the busiest
    * USDT pairs on Binance, discovered at boot, so the list reflects what people

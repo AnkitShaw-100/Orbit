@@ -18,7 +18,24 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(
   cors({
-    origin: [env.clientUrl],
+    /**
+     * Vercel gives every branch and pull request its own preview URL, so a
+     * single allowed origin would block everything except production. Allowed:
+     * the configured client, any preview on the same Vercel project, and
+     * requests with no Origin at all (curl, health checks, server-to-server).
+     */
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      const allowed =
+        origin === env.clientUrl ||
+        env.extraOrigins.includes(origin) ||
+        (env.vercelProject && new RegExp(`^https://${env.vercelProject}-[a-z0-9-]+\\.vercel\\.app$`).test(origin));
+
+      return allowed
+        ? callback(null, true)
+        : callback(new Error(`Origin ${origin} is not allowed to call the Orbit API`));
+    },
     credentials: true,
   }),
 );
