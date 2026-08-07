@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "test": "node --test"
+    "test": "node --test",
+    "start:migrate": "prisma migrate deploy && node src/server.js"
   },
   "keywords": [],
   "author": "",
