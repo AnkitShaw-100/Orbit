@@ -95,8 +95,10 @@ export default function CustomCursor() {
             >
               <defs>
                 <linearGradient id="orbit-cursor-face" x1="0" y1="0" x2="0.9" y2="1">
-                  <stop offset="0%" stopColor="#B49CFB" />
-                  <stop offset="100%" stopColor="#9B7DF6" />
+                  {/* Read from the accent token rather than fixed hex, so the
+                      pointer can never drift out of step with the chrome. */}
+                  <stop offset="0%" stopColor="color-mix(in oklab, var(--color-brand) 70%, white)" />
+                  <stop offset="100%" stopColor="var(--color-brand)" />
                 </linearGradient>
               </defs>
 

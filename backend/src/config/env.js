@@ -44,8 +44,12 @@ const env = {
    * How many markets Orbit lists. The set isn't hardcoded — it's the busiest
    * USDT pairs on Binance, discovered at boot, so the list reflects what people
    * actually trade rather than a guess made once.
+   *
+   * Kept deliberately small: every listed market gets a real logo (see the
+   * icon check in marketData.service), and a tight list of coins people
+   * recognise beats a long tail of tickers nobody can place.
    */
-  symbolLimit: Number(process.env.SYMBOL_LIMIT ?? 100),
+  symbolLimit: Number(process.env.SYMBOL_LIMIT ?? 25),
 
   startingCash: "100000.00",
 };

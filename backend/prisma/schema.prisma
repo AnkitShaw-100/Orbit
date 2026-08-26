@@ -7,7 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Prisma 7: connection URLs live in prisma.config.ts (for migrations) and in
+// Prisma 7: connection URLs live in prisma.config.js (for migrations) and in
 // the driver adapter passed to PrismaClient (for runtime queries).
 datasource db {
   provider = "postgresql"

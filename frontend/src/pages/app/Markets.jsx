@@ -51,14 +51,14 @@ export default function Markets() {
         <label className="relative min-w-0 flex-1 sm:max-w-sm">
           <span className="sr-only">Search markets</span>
           <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-white/35"
+            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-foreground/35"
             aria-hidden="true"
           />
           <input
             value={query}
             onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder="Search a coin"
-            className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
+            className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-foreground/35 focus:border-foreground/30 focus:outline-none"
           />
         </label>
 
@@ -70,8 +70,8 @@ export default function Markets() {
               onClick={() => { setSort(option.value); setPage(1); }}
               className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
                 sort === option.value
-                  ? "border-white bg-white text-ink"
-                  : "border-line text-white/60 hover:text-white"
+                  ? "border-brand bg-brand text-ink"
+                  : "border-line text-foreground/60 hover:text-foreground"
               }`}
             >
               {option.label}
@@ -79,14 +79,14 @@ export default function Markets() {
           ))}
         </div>
 
-        <span className="ml-auto hidden items-center gap-1.5 text-[11px] text-white/40 sm:flex">
-          <span className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-white/30"}`} />
+        <span className="ml-auto hidden items-center gap-1.5 text-[11px] text-foreground/40 sm:flex">
+          <span className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"}`} />
           {status === "live" ? "Live prices" : "Reconnecting"}
         </span>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-        <div className="hidden grid-cols-[1.6fr_1fr_1fr_1fr_1.2fr_auto] gap-4 border-b border-line px-5 py-3 text-xs text-white/40 lg:grid">
+        <div className="hidden grid-cols-[1.6fr_1fr_1fr_1fr_1.2fr_auto] gap-4 border-b border-line px-5 py-3 text-xs text-foreground/40 lg:grid">
           <span>Market</span>
           <span className="text-right">Last price</span>
           <span className="text-right">24h change</span>
@@ -106,26 +106,26 @@ export default function Markets() {
                 className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-line px-5 py-4 last:border-b-0 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1.2fr_auto]"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-white">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
                     <CoinIcon symbol={coin.symbol} />
                   </span>
                   <div className="min-w-0 leading-tight">
-                    <p className="text-sm text-white">
+                    <p className="text-sm text-foreground">
                       {coin.ticker}
-                      <span className="text-white/35">/USDT</span>
+                      <span className="text-foreground/35">/USDT</span>
                     </p>
-                    <p className="truncate text-xs text-white/40">{coin.name}</p>
+                    <p className="truncate text-xs text-foreground/40">{coin.name}</p>
                   </div>
                 </div>
 
                 <div className="text-right leading-tight lg:hidden">
-                  <p className="tabular text-sm text-white">{formatPrice(data?.price)}</p>
+                  <p className="tabular text-sm text-foreground">{formatPrice(data?.price)}</p>
                   <p className={`tabular text-xs ${isUp ? "text-gain" : "text-loss"}`}>
                     {formatPercent(data?.changePct)}
                   </p>
                 </div>
 
-                <span className="tabular hidden text-right text-sm text-white lg:block">
+                <span className="tabular hidden text-right text-sm text-foreground lg:block">
                   {formatPrice(data?.price)}
                 </span>
                 <span className={`tabular hidden text-right text-sm lg:block ${isUp ? "text-gain" : "text-loss"}`}>
@@ -134,13 +134,13 @@ export default function Markets() {
                 <span className={`hidden justify-center lg:flex ${isUp ? "text-gain" : "text-loss"}`}>
                   <Sparkline seed={index + 2} width={80} height={26} />
                 </span>
-                <span className="tabular hidden text-right text-sm text-white/70 lg:block">
+                <span className="tabular hidden text-right text-sm text-foreground/70 lg:block">
                   {formatVolume(data?.quoteVolume)}
                 </span>
 
                 <Link
                   to={`/trade?symbol=${coin.symbol}`}
-                  className="hidden rounded-full border border-line px-4 py-1.5 text-xs text-white/70 transition-colors hover:border-white hover:text-white lg:block"
+                  className="hidden rounded-full border border-line px-4 py-1.5 text-xs text-foreground/70 transition-colors hover:border-foreground hover:text-foreground lg:block"
                 >
                   Trade
                 </Link>
@@ -150,14 +150,14 @@ export default function Markets() {
         </ul>
 
         {rows.length === 0 && (
-          <p className="px-5 py-14 text-center text-sm text-white/45">
+          <p className="px-5 py-14 text-center text-sm text-foreground/45">
             No market matches “{query}”. Orbit lists {markets.data?.markets.length ?? 0} pairs.
           </p>
         )}
 
         {pageCount > 1 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-            <p className="tabular text-xs text-white/40">
+            <p className="tabular text-xs text-foreground/40">
               {(current - 1) * PER_PAGE + 1}–{Math.min(current * PER_PAGE, rows.length)} of{" "}
               {rows.length}
             </p>
@@ -167,7 +167,7 @@ export default function Markets() {
                 type="button"
                 onClick={() => setPage(current - 1)}
                 disabled={current === 1}
-                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-white/70 transition-colors hover:border-white hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line"
+                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-foreground/70 transition-colors hover:border-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line"
               >
                 Previous
               </button>
@@ -180,8 +180,8 @@ export default function Markets() {
                   aria-current={number === current ? "page" : undefined}
                   className={`tabular size-8 rounded-full text-xs transition-colors ${
                     number === current
-                      ? "bg-white font-semibold text-ink"
-                      : "text-white/55 hover:text-white"
+                      ? "bg-brand font-semibold text-ink"
+                      : "text-foreground/55 hover:text-foreground"
                   }`}
                 >
                   {number}
@@ -192,7 +192,7 @@ export default function Markets() {
                 type="button"
                 onClick={() => setPage(current + 1)}
                 disabled={current === pageCount}
-                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-white/70 transition-colors hover:border-white hover:text-white disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line"
+                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-foreground/70 transition-colors hover:border-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line"
               >
                 Next
               </button>

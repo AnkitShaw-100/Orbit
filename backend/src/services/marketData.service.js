@@ -31,8 +31,62 @@ const LEVERAGED = /(UP|DOWN|BULL|BEAR)USDT$/;
 // never move, so they'd fill the top of the market list while teaching nothing.
 const STABLE_BASES = new Set([
   "USDC", "USD1", "FDUSD", "TUSD", "BUSD", "DAI", "USDP", "EURI",
-  "AEUR", "USDE", "PYUSD", "XUSD", "USTC", "SUSD",
+  "AEUR", "USDE", "PYUSD", "XUSD", "USTC", "SUSD", "RLUSD", "USDG",
+  "USDD", "USDS", "USDF", "BFUSD",
 ]);
+
+// Every listed market has to render with its real logo. The UI resolves logos
+// from a bundled icon set first and this CDN second, so a ticker the CDN
+// doesn't carry would fall back to a lettered placeholder — fine as a safety
+// net, wrong as something a quarter of the market list relies on.
+const ICON_URL = (ticker) => `https://assets.coincap.io/assets/icons/${ticker.toLowerCase()}@2x.png`;
+
+// How far past the limit we're willing to look for markets that have artwork.
+// Binance's top-by-volume list carries newly listed tokens and tokenised
+// equities that no icon set knows about; skipping them costs a few places.
+const ICON_SEARCH_DEPTH = 4;
+
+async function hasIcon(symbol) {
+  const ticker = symbol.slice(0, -4);
+  try {
+    const response = await fetch(ICON_URL(ticker), { method: "HEAD" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Narrow a volume-ranked list to the first `limit` markets that have a logo.
+ *
+ * Checked in one parallel batch at boot, and ordering is preserved, so this
+ * stays a filter on the ranking rather than a re-ranking. If the CDN is
+ * unreachable the check fails open — a placeholder logo is a far smaller
+ * problem than booting with no markets at all.
+ */
+async function keepIllustrated(ranked, limit) {
+  const candidates = ranked.slice(0, limit * ICON_SEARCH_DEPTH);
+
+  let flags;
+  try {
+    flags = await Promise.all(candidates.map((row) => hasIcon(row.symbol)));
+  } catch {
+    return ranked.slice(0, limit);
+  }
+
+  const illustrated = candidates.filter((_, index) => flags[index]);
+  if (illustrated.length < limit) {
+    console.warn(`[market] only ${illustrated.length} of ${limit} markets have logos`);
+    return ranked.slice(0, limit);
+  }
+
+  const dropped = candidates.slice(0, limit).filter((_, index) => !flags[index]);
+  if (dropped.length > 0) {
+    console.log(`[market] skipped ${dropped.map((row) => row.symbol).join(", ")} — no logo`);
+  }
+
+  return illustrated.slice(0, limit);
+}
 
 function snapshot() {
   return Object.fromEntries(prices);
@@ -59,21 +113,22 @@ function record(symbol, data) {
  *
  * The full 24h ticker gives both the ranking and the opening snapshot, so
  * discovery costs nothing extra: sort every USDT spot pair by real traded
- * volume, drop leveraged tokens, keep the top N.
+ * volume, drop leveraged tokens and anything with no logo, keep the top N.
  */
 async function discoverAndSeed() {
   const response = await fetch(`${env.binanceRestUrl}/api/v3/ticker/24hr`);
   if (!response.ok) throw new Error(`Binance REST responded ${response.status}`);
 
   const rows = await response.json();
-  const ranked = rows
+  const byVolume = rows
     // Plain A-Z0-9 tickers only — Binance carries the odd non-Latin listing
     // that has no logo, no name and nothing sensible to render.
     .filter((row) => /^[A-Z0-9]+USDT$/.test(row.symbol) && !LEVERAGED.test(row.symbol))
     .filter((row) => !STABLE_BASES.has(row.symbol.slice(0, -4)))
     .filter((row) => Number(row.quoteVolume) > 0)
-    .sort((a, b) => Number(b.quoteVolume) - Number(a.quoteVolume))
-    .slice(0, env.symbolLimit);
+    .sort((a, b) => Number(b.quoteVolume) - Number(a.quoteVolume));
+
+  const ranked = await keepIllustrated(byVolume, env.symbolLimit);
 
   symbols = ranked.map((row) => row.symbol);
 

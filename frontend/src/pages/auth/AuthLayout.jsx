@@ -6,24 +6,24 @@ import { Link } from "react-router";
  */
 export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
-    <div className="grid min-h-screen bg-ink lg:grid-cols-[1fr_minmax(0,42%)]">
+    <div className="grid min-h-screen bg-void lg:grid-cols-[1fr_minmax(0,42%)]">
       <div className="flex flex-col justify-center px-6 py-16 sm:px-12 lg:px-20">
         <Link to="/" className="mb-12 flex w-fit items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-full border border-white/25">
-            <span className="size-1.5 rounded-full bg-white" />
+          <span className="grid size-7 place-items-center rounded-full border border-foreground/25">
+            <span className="size-1.5 rounded-full bg-foreground" />
           </span>
-          <span className="font-display text-lg font-bold tracking-tight text-white">Orbit</span>
+          <span className="font-display text-lg font-bold tracking-tight text-foreground">Orbit</span>
         </Link>
 
         <div className="w-full max-w-sm">
-          <h1 className="font-display text-[clamp(1.9rem,3.5vw,2.6rem)] font-bold leading-[1.05] tracking-[-0.035em] text-white">
+          <h1 className="font-display text-[clamp(1.9rem,3.5vw,2.6rem)] font-bold leading-[1.05] tracking-[-0.035em] text-foreground">
             {title}
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/50">{subtitle}</p>
+          <p className="mt-3 text-sm leading-relaxed text-foreground/50">{subtitle}</p>
 
           <div className="mt-9">{children}</div>
 
-          <p className="mt-8 text-sm text-white/45">{footer}</p>
+          <p className="mt-8 text-sm text-foreground/45">{footer}</p>
         </div>
       </div>
 
@@ -43,15 +43,15 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
 export function Field({ label, type = "text", name, placeholder, autoComplete, hint }) {
   return (
     <label className="block">
-      <span className="text-xs text-white/55">{label}</span>
+      <span className="text-xs text-foreground/55">{label}</span>
       <input
         type={type}
         name={name}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="mt-2 w-full rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/25 focus:border-white/45 focus:outline-none"
+        className="mt-2 w-full rounded-xl border border-foreground/15 bg-foreground/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-foreground/25 focus:border-foreground/45 focus:outline-none"
       />
-      {hint && <span className="mt-1.5 block text-[11px] text-white/35">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-[11px] text-foreground/35">{hint}</span>}
     </label>
   );
 }

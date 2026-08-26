@@ -11,6 +11,10 @@
     --font-display: 'Space Grotesk Variable', sans-serif;
     --font-sans: 'Inter Variable', sans-serif;
 
+    /* Identifiers — order ids, tickers, timestamps — set in mono so they read
+       as machine values rather than prose, and so they align in a column. */
+    --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace;
+
     /* Orbit brand — the shell is monochrome; the gradient carries all the colour. */
     --color-ink: #0A0A0A;
     --color-mist: #F2F2F0;
@@ -19,18 +23,52 @@
     --color-grad-lilac: #D9C9F2;
 
     /* Reserved for market data only — never for UI chrome.
-       TradingView's default pairing: teal up, red down. */
-    --color-gain: #2DD4BF;
-    --color-loss: #EF5350;
+       TradingView's default pairing: teal up, red down.
 
-    /* The pointer is the one place lilac appears as a solid, not a gradient. */
-    --color-cursor: #A78BFA;
+       Both are theme-aware. The dark values are tuned to glow against a near
+       black panel, and at that lightness they wash out to nothing on paper —
+       a P&L figure nobody can read is worse than no colour at all. */
+    --color-gain: var(--market-gain);
+    --color-loss: var(--market-loss);
+
+    /* The pointer runs the accent, so the one thing that follows you around
+       the app belongs to the same family as everything you can click. */
+    --color-cursor: var(--color-brand);
 
     /* Terminal surfaces — the app behind the login wall is denser than the
-       marketing page, so it needs panel greys the landing page never uses. */
-    --color-panel: #101012;
-    --color-panel-2: #17171A;
-    --color-line: #232327;
+       marketing page, so it needs panel greys the landing page never uses.
+
+       Four steps — a floor, a card, a raised state and a rule — that all
+       separate from one another in either theme. Each is a *warm* grey: a flat
+       #000 panel reads as a dead pixel and a flat #FFF one reads as paper with
+       nothing printed on it, so both palettes drift off-neutral.
+
+       The values live on :root and .dark below; these only name the roles, so
+       every surface in the app follows the theme without knowing about it. */
+    --color-void: var(--surface-void);
+    --color-panel: var(--surface-panel);
+    --color-panel-2: var(--surface-panel-2);
+    --color-line: var(--surface-line);
+
+    /* Gold is the app's one accent: primary buttons, the active nav item and
+       every focus ring. Warm and deep enough to hold its own against a dark
+       panel, and outside the market palette on purpose — teal and red mean up
+       and down, so chrome needs a hue that can never be read as a direction. */
+    --color-brand: #E3A72F;
+
+    /* The third text tier, below foreground and muted-foreground.
+       Orbit used to write secondary text as foreground/45 down to /30, which
+       measures 4.4:1 down to 2.6:1 against a panel — under AA, and the reason
+       dense tables read as mush. Three solid steps, every one of them tested
+       against both themes, replace nine guessed opacities. */
+    --color-faint: var(--text-faint);
+
+    /* Stat tiles only. Each figure keeps the same hue everywhere it appears,
+       so a colour becomes a shorthand for a measure rather than decoration. */
+    --color-iris: #6366F1;
+    --color-mint: #34D399;
+    --color-ember: #F97316;
+    --color-sky: #38BDF8;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -72,72 +110,102 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    /* Warm paper, not white. The dark theme's greys drift warm as they
+       lighten; the light theme drifts warm as it darkens, so the two are the
+       same palette read from opposite ends. */
+    --surface-void: #F7F4EF;
+    --surface-panel: #FFFFFF;
+    --surface-panel-2: #F2EEE6;
+    --surface-line: #E4DED2;
+
+    /* Foreground is a warm near-black, never #000 — the app writes most of its
+       secondary text as foreground/45, and pure black at 45% goes flat grey. */
+    --background: #F7F4EF;
+    --foreground: #191612;
+    --card: #FFFFFF;
+    --card-foreground: #191612;
+    --popover: #FFFFFF;
+    --popover-foreground: #191612;
+    --primary: #E3A72F;
+    --primary-foreground: #191204;
+    --secondary: #F2EEE6;
+    --secondary-foreground: #191612;
+    --muted: #F2EEE6;
+    --muted-foreground: #6B6459;
+    --accent: #F2EEE6;
+    --accent-foreground: #191612;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --border: #E4DED2;
+    --input: #E4DED2;
+    --ring: #E3A72F;
+    --chart-1: #E3A72F;
+    --chart-2: #6366F1;
+    --chart-3: #34D399;
+    --chart-4: #F97316;
+    --chart-5: #38BDF8;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #191612;
+    --sidebar-primary: #E3A72F;
+    --sidebar-primary-foreground: #191204;
+    --sidebar-accent: #F2EEE6;
+    --sidebar-accent-foreground: #191612;
+    --sidebar-border: #E4DED2;
+    --sidebar-ring: #E3A72F;
+
+    --text-faint: #736C60;
+
+    --market-gain: #0B8F7B;
+    --market-loss: #D13B33;
+
+    /* The hairline scrollbar reads against whatever it sits on. */
+    --scroll-thumb: rgba(0, 0, 0, 0.22);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --surface-void: #0B0B0E;
+    --surface-panel: #141418;
+    --surface-panel-2: #1C1C21;
+    --surface-line: #27272E;
+
+    --background: #0B0B0E;
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
+    --card: #141418;
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
+    --popover: #1C1C21;
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
+    --primary: #E3A72F;
+    --primary-foreground: #191204;
+    --secondary: #1C1C21;
     --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
+    --muted: #1C1C21;
+    --muted-foreground: #A6A19A;
+    --accent: #27272E;
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
+    --border: #27272E;
+    --input: #27272E;
+    --ring: #E3A72F;
+    --chart-1: #E3A72F;
+    --chart-2: #6366F1;
+    --chart-3: #34D399;
+    --chart-4: #F97316;
+    --chart-5: #2DD4BF;
+    --sidebar: #141418;
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-primary: #E3A72F;
+    --sidebar-primary-foreground: #191204;
+    --sidebar-accent: #1C1C21;
     --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-border: #27272E;
+    --sidebar-ring: #E3A72F;
+
+    --text-faint: #8C877F;
+
+    --market-gain: #2DD4BF;
+    --market-loss: #EF5350;
+
+    --scroll-thumb: rgba(255, 255, 255, 0.18);
 }
 
 @layer base {
@@ -146,6 +214,12 @@
     }
   body {
     @apply bg-background text-foreground;
+    /* Light text on a dark ground renders heavy without this — stems thicken
+       and small labels lose their counters, which is most of why a dark UI
+       reads as blurry next to a light one. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     }
   html {
     @apply font-sans;
@@ -158,6 +232,28 @@
   .tabular {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
+  }
+
+  /* A stat tile borrows its hue from --tint, set per tile. One mechanism for
+     the surface, the hairline and the icon chip means a new measure needs a
+     colour, not a new class. */
+  .tint {
+    background-color: color-mix(in oklab, var(--tint) 9%, var(--color-panel));
+    border-color: color-mix(in oklab, var(--tint) 20%, var(--color-line));
+  }
+
+  .tint-chip {
+    background-color: color-mix(in oklab, var(--tint) 20%, transparent);
+    color: var(--tint);
+  }
+
+  /* The identity band is the only surface in the app the accent floods. It is
+     the one page about the person rather than the market, and the wash is what
+     says so — every other panel stays neutral. */
+  .accent-wash {
+    background:
+      radial-gradient(130% 150% at 0% 0%, color-mix(in oklab, var(--color-brand) 18%, transparent) 0%, transparent 64%),
+      var(--color-panel);
   }
 
   .orbit-gradient {
@@ -176,7 +272,7 @@
 }
 
 .scroll-thin:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 
 .scroll-thin::-webkit-scrollbar {
@@ -193,7 +289,7 @@
 }
 
 .scroll-thin:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.18);
+  background-color: var(--scroll-thumb);
 }
 
 /* One rhythm for every section, so gutters and vertical spacing stop drifting
@@ -223,6 +319,16 @@
    it because the navbar already closes the hero. */
 .page > section + section {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Both themes get a real colour scheme so form controls, scrollbars and
+   selection highlights come from the OS in the right palette. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
 }
 
 /* The measure every boxed section shares. Narrow enough that table rows and

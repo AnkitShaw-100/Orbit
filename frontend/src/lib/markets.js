@@ -6,7 +6,7 @@ import manifest from "cryptocurrency-icons/manifest.json";
  * The list itself comes from the API — the backend ranks Binance's USDT pairs
  * by real traded volume, so the frontend never hardcodes which coins exist.
  * Names and brand colours come from the icon set's own manifest, which spares
- * us maintaining a table of 100 coin names by hand.
+ * us maintaining a table of coin names by hand.
  */
 const META = new Map(
   manifest.map((entry) => [entry.symbol.toUpperCase(), { name: entry.name, color: entry.color }]),

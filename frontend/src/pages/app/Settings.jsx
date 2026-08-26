@@ -1,74 +1,79 @@
 import { useState } from "react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { Panel } from "@/components/app/Panel";
 import { formatUsd } from "@/lib/format";
+import { useTheme } from "@/hooks/useTheme";
 
 function Row({ label, description, children }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4 last:border-b-0 last:pb-0 first:pt-0">
-      <div className="min-w-0 max-w-[46ch]">
-        <p className="text-sm text-white">{label}</p>
-        {description && <p className="mt-1 text-xs leading-relaxed text-white/45">{description}</p>}
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4 first:pt-0 last:border-b-0 last:pb-0">
+      <div className="max-w-[52ch] min-w-0">
+        <p className="text-sm text-foreground">{label}</p>
+        {description && (
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
+        )}
       </div>
       {children}
     </div>
   );
 }
 
-function Toggle({ checked, onChange, label }) {
+const THEME_OPTIONS = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+];
+
+/** Three states, not a switch: "system" is a real choice, not the absence of one. */
+function ThemeChoice({ theme, onChange }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ${
-        checked ? "bg-gain" : "bg-white/15"
-      }`}
-    >
-      <span
-        className={`block size-5 rounded-full bg-white transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
-      />
-    </button>
+    <div role="radiogroup" aria-label="Theme" className="flex gap-1 rounded-full border border-line p-1">
+      {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
+        const active = theme === value;
+
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(value)}
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
+              active
+                ? "bg-brand text-ink"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="size-3.5" aria-hidden="true" />
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
 export default function Settings() {
-  const [confirmOrders, setConfirmOrders] = useState(true);
-  const [priceAlerts, setPriceAlerts] = useState(false);
-  const [compactRows, setCompactRows] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [resetArmed, setResetArmed] = useState(false);
 
   return (
     <div className="max-w-3xl space-y-5 p-4 sm:p-6">
-      <Panel title="Trading">
-        <Row
-          label="Confirm before placing an order"
-          description="Shows a summary of quantity and cost before the order fills. Turn this off once the mechanics feel familiar."
-        >
-          <Toggle checked={confirmOrders} onChange={setConfirmOrders} label="Confirm before placing an order" />
-        </Row>
-        <Row
-          label="Price alerts"
-          description="Notify me when a coin on my watchlist moves more than 5% in a day."
-        >
-          <Toggle checked={priceAlerts} onChange={setPriceAlerts} label="Price alerts" />
-        </Row>
-      </Panel>
+      <header>
+        <h2 className="font-display text-xl font-bold tracking-[-0.03em] text-foreground">
+          Settings
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your theme is saved on this device.
+        </p>
+      </header>
 
       <Panel title="Appearance">
         <Row
           label="Theme"
-          description="Orbit is built for dark rooms and long sessions. A light theme is planned."
+          description="System follows whatever your device is set to, including a schedule that switches at sunset."
         >
-          <span className="rounded-full border border-line px-4 py-2 text-xs text-white/50">
-            Dark
-          </span>
-        </Row>
-        <Row label="Compact tables" description="Tighter rows so more of your history fits on screen.">
-          <Toggle checked={compactRows} onChange={setCompactRows} label="Compact tables" />
+          <ThemeChoice theme={theme} onChange={setTheme} />
         </Row>
       </Panel>
 
@@ -88,7 +93,7 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={() => setResetArmed(false)}
-                className="rounded-full border border-line px-4 py-2 text-xs text-white/60"
+                className="rounded-full border border-line px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
                 Cancel
               </button>
@@ -116,10 +121,6 @@ export default function Settings() {
           </button>
         </Row>
       </Panel>
-
-      <p className="text-[11px] text-white/30">
-        Settings are stored locally until the accounts service is connected.
-      </p>
     </div>
   );
 }

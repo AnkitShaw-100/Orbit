@@ -1,0 +1,61 @@
+name: Keep Supabase awake
+
+# Supabase pauses free projects after 7 consecutive days with no database
+# activity. This runs a trivial query well inside that window so the clock
+# never reaches zero.
+#
+# It deliberately lives in GitHub Actions rather than in the Orbit API: the
+# API only touches the database while it is deployed and running, so a paused
+# Railway service or a laptop that is simply switched off would let the
+# database go idle — exactly the situation this is meant to prevent.
+#
+# Setup: add a repository secret named SUPABASE_DB_URL containing the value of
+# DIRECT_URL from backend/.env (Supabase → Project Settings → Database →
+# Connection string → Session pooler, port 5432).
+#   Repo → Settings → Secrets and variables → Actions → New repository secret
+
+on:
+  schedule:
+    # 06:17 UTC daily. An odd minute on purpose — jobs scheduled on the hour
+    # queue behind everyone else's and are the first to be dropped when GitHub
+    # is busy. Daily rather than weekly leaves room for several missed runs
+    # before the 7-day window closes.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query the database
+        env:
+          # psql reads this directly, so the connection string never appears in
+          # a command line or the run log.
+          PGURI: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${PGURI:-}" ]; then
+            echo "::error::SUPABASE_DB_URL secret is not set. See the comment at the top of this file."
+            exit 1
+          fi
+
+          # A real query against a real table. `select 1` would be answered by
+          # the pooler without the database necessarily doing any work; counting
+          # a table guarantees the Postgres instance itself was touched.
+          for attempt in 1 2 3; do
+            if psql "$PGURI" -qtAX -c "select 'orbit-keepalive ' || now() || ' users=' || (select count(*) from users);"; then
+              echo "Database is awake."
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in $((attempt * 15))s"
+            sleep $((attempt * 15))
+          done
+
+          echo "::error::Could not reach the database after 3 attempts."
+          exit 1

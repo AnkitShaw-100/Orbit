@@ -19,26 +19,26 @@ export default function BaselineBar({ value, baseline, ceiling = baseline * 1.6 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-xs text-white/45">Against your $100,000 start</p>
+        <p className="text-xs text-foreground/45">Against your $100,000 start</p>
         <p className={`tabular text-sm font-medium ${ahead ? "text-gain" : "text-loss"}`}>
           {ahead ? "+" : "−"}
           {formatUsd(Math.abs(delta)).slice(1)}
         </p>
       </div>
 
-      <div className="relative mt-3 h-2 rounded-full bg-white/5">
+      <div className="relative mt-3 h-2 rounded-full bg-foreground/5">
         <span
           className={`absolute inset-y-0 rounded-full ${ahead ? "bg-gain" : "bg-loss"}`}
           style={{ left: `${left}%`, width: `${width}%` }}
         />
         <span
-          className="absolute -top-1 h-4 w-px bg-white/60"
+          className="absolute -top-1 h-4 w-px bg-foreground/60"
           style={{ left: `${basePct}%` }}
           aria-hidden="true"
         />
       </div>
 
-      <div className="mt-2 flex justify-between text-[10px] text-white/30">
+      <div className="mt-2 flex justify-between text-[10px] text-foreground/30">
         <span>$0</span>
         <span className="tabular">start {formatUsd(baseline)}</span>
         <span className="tabular">{formatUsd(ceiling)}</span>

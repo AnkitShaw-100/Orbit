@@ -36,7 +36,7 @@ export default function Login() {
       footer={
         <>
           New here?{" "}
-          <Link to="/signup" className="text-white underline underline-offset-4">
+          <Link to="/signup" className="text-foreground underline underline-offset-4">
             Create an account
           </Link>
         </>
@@ -55,7 +55,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-full bg-white py-3.5 text-sm font-semibold text-ink transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-ink transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
         >
           {busy ? "Signing in…" : "Sign in"}
         </button>

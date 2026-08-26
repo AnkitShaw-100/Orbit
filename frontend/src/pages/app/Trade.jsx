@@ -190,33 +190,33 @@ export default function Trade() {
           />
 
           <div>
-            <p className="text-[10px] text-white/40">Last price</p>
+            <p className="text-[10px] text-foreground/40">Last price</p>
             <p className={`tabular text-sm font-medium ${isUp ? "text-gain" : "text-loss"}`}>
               {formatPrice(price)}
             </p>
           </div>
           <div>
-            <p className="text-[10px] text-white/40">24h change</p>
+            <p className="text-[10px] text-foreground/40">24h change</p>
             <p className={`tabular text-sm font-medium ${isUp ? "text-gain" : "text-loss"}`}>
               {formatPercent(ticker?.changePct)}
             </p>
           </div>
           <div className="hidden sm:block">
-            <p className="text-[10px] text-white/40">24h volume</p>
-            <p className="tabular text-sm font-medium text-white">
+            <p className="text-[10px] text-foreground/40">24h volume</p>
+            <p className="tabular text-sm font-medium text-foreground">
               {formatVolume(ticker?.quoteVolume)}
             </p>
           </div>
 
-          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-white/40">
-            <span className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-white/30"}`} />
+          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-foreground/40">
+            <span className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"}`} />
             {status === "live" ? "Live" : "Reconnecting"}
           </span>
         </div>
 
         <div className="rounded-2xl border border-line bg-panel">
           <header className="flex items-center justify-between border-b border-line px-5 py-3">
-            <h2 className="text-sm font-semibold text-white">Chart</h2>
+            <h2 className="text-sm font-semibold text-foreground">Chart</h2>
             <div className="flex gap-1">
               {RANGES.map((option) => (
                 <button
@@ -224,7 +224,7 @@ export default function Trade() {
                   type="button"
                   onClick={() => setRange(option.label)}
                   className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                    range === option.label ? "bg-white text-ink" : "text-white/50 hover:text-white"
+                    range === option.label ? "bg-brand text-ink" : "text-foreground/50 hover:text-foreground"
                   }`}
                 >
                   {option.label}
@@ -237,8 +237,8 @@ export default function Trade() {
               <CandleChart data={candles} theme="dark" livePrice={price} />
             ) : candlesFailed ? (
               <div className="grid h-full place-content-center text-center">
-                <p className="text-sm text-white">Couldn't load candles for {coin.ticker}</p>
-                <p className="mt-1.5 text-xs text-white/45">
+                <p className="text-sm text-foreground">Couldn't load candles for {coin.ticker}</p>
+                <p className="mt-1.5 text-xs text-foreground/45">
                   Check the Orbit API is running, then switch timeframe to retry.
                 </p>
               </div>
@@ -253,7 +253,7 @@ export default function Trade() {
             <Loading label="Loading positions" />
           ) : portfolio.data?.holdings.length ? (
             <>
-              <div className="hidden grid-cols-[4rem_1fr_1fr_1fr_1fr_11rem] gap-4 border-b border-line px-5 py-2.5 text-[11px] text-white/35 sm:grid">
+              <div className="hidden grid-cols-[4rem_1fr_1fr_1fr_1fr_11rem] gap-4 border-b border-line px-5 py-2.5 text-[11px] text-foreground/35 sm:grid">
                 <span>Asset</span>
                 <span className="text-right">Quantity</span>
                 <span className="text-right">Avg price</span>
@@ -273,7 +273,7 @@ export default function Trade() {
                       key={holding.symbol}
                       className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-line px-5 py-3.5 last:border-b-0 sm:grid-cols-[4rem_1fr_1fr_1fr_1fr_11rem] sm:gap-4"
                     >
-                      <span className="flex items-center gap-2 text-sm text-white">
+                      <span className="flex items-center gap-2 text-sm text-foreground">
                         {tickerOf(holding.symbol)}
                         {holding.side === "SHORT" && (
                           <span className="rounded bg-loss/20 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-loss">
@@ -282,13 +282,13 @@ export default function Trade() {
                         )}
                       </span>
 
-                      <span className="tabular hidden text-right text-xs text-white/50 sm:block">
+                      <span className="tabular hidden text-right text-xs text-foreground/50 sm:block">
                         {quantity}
                       </span>
-                      <span className="tabular hidden text-right text-xs text-white/60 sm:block">
+                      <span className="tabular hidden text-right text-xs text-foreground/60 sm:block">
                         {formatPrice(Number(holding.averagePrice))}
                       </span>
-                      <span className="tabular hidden text-right text-xs text-white sm:block">
+                      <span className="tabular hidden text-right text-xs text-foreground sm:block">
                         {formatPrice(Number(holding.marketPrice))}
                       </span>
                       <span
@@ -302,7 +302,7 @@ export default function Trade() {
                         <button
                           type="button"
                           onClick={() => addTo(holding.symbol, quantity)}
-                          className="rounded-md border border-line px-2.5 py-1 text-[11px] text-white/70 transition-colors hover:border-gain/60 hover:text-gain"
+                          className="rounded-md border border-line px-2.5 py-1 text-[11px] text-foreground/70 transition-colors hover:border-gain/60 hover:text-gain"
                         >
                           Add
                         </button>
@@ -315,14 +315,14 @@ export default function Trade() {
                               type="button"
                               onClick={() => closePosition(holding.symbol, quantity)}
                               disabled={placeOrder.isPending}
-                              className="rounded-md bg-loss px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-60"
+                              className="rounded-md bg-loss px-2.5 py-1 text-[11px] font-semibold text-foreground disabled:opacity-60"
                             >
                               {placeOrder.isPending ? "Closing…" : "Confirm"}
                             </button>
                             <button
                               type="button"
                               onClick={() => setCloseArmed(null)}
-                              className="rounded-md border border-line px-2.5 py-1 text-[11px] text-white/55"
+                              className="rounded-md border border-line px-2.5 py-1 text-[11px] text-foreground/55"
                             >
                               Cancel
                             </button>
@@ -331,7 +331,7 @@ export default function Trade() {
                           <button
                             type="button"
                             onClick={() => setCloseArmed(holding.symbol)}
-                            className="rounded-md border border-line px-2.5 py-1 text-[11px] text-white/70 transition-colors hover:border-loss/60 hover:text-loss"
+                            className="rounded-md border border-line px-2.5 py-1 text-[11px] text-foreground/70 transition-colors hover:border-loss/60 hover:text-loss"
                           >
                             Close
                           </button>
@@ -343,7 +343,7 @@ export default function Trade() {
               </ul>
             </>
           ) : (
-            <p className="px-5 py-10 text-center text-sm text-white/45">
+            <p className="px-5 py-10 text-center text-sm text-foreground/45">
               No open positions yet.
             </p>
           )}
@@ -365,8 +365,8 @@ export default function Trade() {
                   side === option
                     ? option === "BUY"
                       ? "bg-gain text-ink"
-                      : "bg-loss text-white"
-                    : "border border-line text-white/55 hover:text-white"
+                      : "bg-loss text-foreground"
+                    : "border border-line text-foreground/55 hover:text-foreground"
                 }`}
               >
                 {option === "BUY" ? "Buy" : "Sell"}
@@ -374,21 +374,21 @@ export default function Trade() {
             ))}
           </div>
 
-          <p className="mt-4 rounded-lg bg-panel-2 px-3 py-2 text-[11px] text-white/45">
+          <p className="mt-4 rounded-lg bg-panel-2 px-3 py-2 text-[11px] text-foreground/45">
             Market order — fills immediately at {formatPrice(price)}.
           </p>
 
-          <p className="mt-2 text-[11px] text-white/60">{intent}</p>
+          <p className="mt-2 text-[11px] text-foreground/60">{intent}</p>
 
           <label className="mt-4 block">
-            <span className="text-[11px] text-white/45">
+            <span className="text-[11px] text-foreground/45">
               {side === "BUY" ? "Spend (USDT)" : "Sell value (USDT)"}
             </span>
             <input
               value={amount}
               onChange={(event) => setAmount(event.target.value.replace(/[^0-9.]/g, ""))}
               inputMode="decimal"
-              className="tabular mt-1.5 w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-white focus:border-white/30 focus:outline-none"
+              className="tabular mt-1.5 w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-foreground focus:border-foreground/30 focus:outline-none"
             />
           </label>
 
@@ -408,7 +408,7 @@ export default function Trade() {
                     ),
                   )
                 }
-                className="rounded-md border border-line py-1 text-[10px] text-white/50 transition-colors hover:text-white"
+                className="rounded-md border border-line py-1 text-[10px] text-foreground/50 transition-colors hover:text-foreground"
               >
                 {pct}%
               </button>
@@ -423,8 +423,8 @@ export default function Trade() {
               ["Short room", formatUsd(shortCapacity)],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3">
-                <dt className="text-white/45">{label}</dt>
-                <dd className="tabular text-white">{value}</dd>
+                <dt className="text-foreground/45">{label}</dt>
+                <dd className="tabular text-foreground">{value}</dd>
               </div>
             ))}
           </dl>
@@ -435,7 +435,7 @@ export default function Trade() {
               className={`mt-3 rounded-lg border px-3 py-2 text-[11px] ${
                 portfolio.data.atRisk
                   ? "border-loss/40 bg-loss/10 text-loss"
-                  : "border-line bg-panel-2 text-white/55"
+                  : "border-line bg-panel-2 text-foreground/55"
               }`}
             >
               <p className="tabular">
@@ -462,7 +462,7 @@ export default function Trade() {
                 {tickerOf(receipt.symbol)} at {formatPrice(receipt.price)}
               </p>
               {receipt.realizedPnl != null && (
-                <p className="tabular mt-0.5 text-white/60">
+                <p className="tabular mt-0.5 text-foreground/60">
                   Realised {receipt.realizedPnl >= 0 ? "+" : "−"}
                   {formatUsd(Math.abs(receipt.realizedPnl)).slice(1)}
                 </p>
@@ -476,10 +476,10 @@ export default function Trade() {
             disabled={blocked}
             className={`mt-4 w-full rounded-lg py-3 text-sm font-semibold transition-colors ${
               blocked
-                ? "cursor-not-allowed bg-white/10 text-white/35"
+                ? "cursor-not-allowed bg-foreground/10 text-foreground/35"
                 : side === "BUY"
                   ? "bg-gain text-ink hover:brightness-110"
-                  : "bg-loss text-white hover:brightness-110"
+                  : "bg-loss text-foreground hover:brightness-110"
             }`}
           >
             {placeOrder.isPending
@@ -487,7 +487,7 @@ export default function Trade() {
               : `${side === "BUY" ? "Buy" : "Sell"} ${coin.ticker}`}
           </button>
 
-          <p className="mt-3 text-[10px] leading-relaxed text-white/30">
+          <p className="mt-3 text-[10px] leading-relaxed text-foreground/30">
             Orders execute against your virtual balance at the server's price.
           </p>
         </Panel>

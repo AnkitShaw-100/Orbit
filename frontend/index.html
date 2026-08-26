@@ -5,6 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orbit</title>
+
+    <!-- Applied before the first paint, and before React loads. Setting the
+         theme from a component would render the wrong one for a frame, which
+         is a white flash for everyone who chose dark. Keep the storage key in
+         step with src/hooks/useTheme.js. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("orbit-theme") || "system";
+          var dark =
+            stored === "dark" ||
+            (stored === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (error) {
+          // Blocked site data. Dark is the terminal's default.
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

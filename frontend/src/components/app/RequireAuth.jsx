@@ -12,8 +12,8 @@ export default function RequireAuth({ children }) {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-ink">
-        <span className="size-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+      <div className="grid min-h-screen place-items-center bg-void">
+        <span className="size-6 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />
         <span className="sr-only">Loading your account</span>
       </div>
     );

@@ -52,14 +52,14 @@ export default function Portfolio() {
       {p.holdings.length === 0 ? (
         <Panel title="Holdings">
           <div className="py-12 text-center">
-            <p className="text-sm text-white">Nothing held yet</p>
-            <p className="mx-auto mt-1.5 max-w-[42ch] text-xs leading-relaxed text-white/45">
+            <p className="text-sm text-foreground">Nothing held yet</p>
+            <p className="mx-auto mt-1.5 max-w-[42ch] text-xs leading-relaxed text-foreground/45">
               All {formatUsd(Number(p.cash))} of your virtual cash is uninvested. Buy
               something and this page starts telling you whether it was a good idea.
             </p>
             <Link
               to="/trade"
-              className="mt-5 inline-block rounded-full bg-white px-5 py-2.5 text-xs font-semibold text-ink"
+              className="mt-5 inline-block rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-ink"
             >
               Go to trade
             </Link>
@@ -70,7 +70,7 @@ export default function Portfolio() {
           <Panel title="Allocation">
             {/* A stacked bar rather than a doughnut — it reads faster at this
                 number of holdings and stays legible on a phone. */}
-            <div className="flex h-3 overflow-hidden rounded-full bg-white/5">
+            <div className="flex h-3 overflow-hidden rounded-full bg-foreground/5">
               {allocation.map((row, index) => (
                 <span
                   key={row.symbol}
@@ -92,8 +92,8 @@ export default function Portfolio() {
                     style={{ opacity: 1 - index * 0.18 }}
                     aria-hidden="true"
                   />
-                  <span className="text-white">{tickerOf(row.symbol)}</span>
-                  <span className="tabular text-white/45">
+                  <span className="text-foreground">{tickerOf(row.symbol)}</span>
+                  <span className="tabular text-foreground/45">
                     {((Number(row.value) / positionsValue) * 100).toFixed(1)}%
                   </span>
                 </li>
@@ -102,7 +102,7 @@ export default function Portfolio() {
           </Panel>
 
           <Panel title="Holdings" bodyClassName="p-0">
-            <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr] gap-4 border-b border-line px-5 py-3 text-xs text-white/40 lg:grid">
+            <div className="hidden grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr] gap-4 border-b border-line px-5 py-3 text-xs text-foreground/40 lg:grid">
               <span>Asset</span>
               <span className="text-right">Quantity</span>
               <span className="text-right">Avg price</span>
@@ -119,27 +119,27 @@ export default function Portfolio() {
                     className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-line px-5 py-4 last:border-b-0 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr]"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-white">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
                         <CoinIcon symbol={row.symbol} />
                       </span>
                       <div className="min-w-0 leading-tight">
-                        <p className="text-sm text-white">{tickerOf(row.symbol)}</p>
-                        <p className="truncate text-xs text-white/40">{row.symbol}</p>
+                        <p className="text-sm text-foreground">{tickerOf(row.symbol)}</p>
+                        <p className="truncate text-xs text-foreground/40">{row.symbol}</p>
                       </div>
                     </div>
 
-                    <span className="tabular hidden text-right text-sm text-white/70 lg:block">
+                    <span className="tabular hidden text-right text-sm text-foreground/70 lg:block">
                       {Number(row.quantity)}
                     </span>
-                    <span className="tabular hidden text-right text-sm text-white/70 lg:block">
+                    <span className="tabular hidden text-right text-sm text-foreground/70 lg:block">
                       {formatPrice(Number(row.averagePrice))}
                     </span>
-                    <span className="tabular hidden text-right text-sm text-white lg:block">
+                    <span className="tabular hidden text-right text-sm text-foreground lg:block">
                       {formatPrice(Number(row.marketPrice))}
                     </span>
 
                     <div className="text-right leading-tight">
-                      <p className="tabular text-sm text-white">{formatUsd(Number(row.value))}</p>
+                      <p className="tabular text-sm text-foreground">{formatUsd(Number(row.value))}</p>
                       <p className={`tabular text-xs ${pnl >= 0 ? "text-gain" : "text-loss"}`}>
                         {pnl >= 0 ? "+" : "−"}
                         {formatUsd(Math.abs(pnl)).slice(1)} (

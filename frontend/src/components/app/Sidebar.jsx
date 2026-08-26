@@ -28,13 +28,31 @@ function Item({ to, label, icon: Icon, collapsed }) {
       to={to}
       title={collapsed ? label : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-          isActive ? "bg-white/10 text-white" : "text-white/55 hover:bg-white/5 hover:text-white"
+        // The active item carries the accent on the icon and a rail on the
+        // edge, not on the label — a coloured word in a list of plain ones is
+        // harder to scan than a marker in a fixed position.
+        `relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+          isActive
+            ? "bg-brand/10 text-foreground"
+            : "text-foreground/55 hover:bg-foreground/[0.04] hover:text-foreground"
         }`
       }
     >
-      <Icon className="size-4.5 shrink-0" aria-hidden="true" />
-      <span className={collapsed ? "sr-only" : ""}>{label}</span>
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-brand"
+            />
+          )}
+          <Icon
+            className={`size-4.5 shrink-0 ${isActive ? "text-brand" : ""}`}
+            aria-hidden="true"
+          />
+          <span className={collapsed ? "sr-only" : ""}>{label}</span>
+        </>
+      )}
     </NavLink>
   );
 }
@@ -47,10 +65,10 @@ export default function Sidebar({ collapsed = false }) {
       } py-5`}
     >
       <NavLink to="/" className="mb-8 flex items-center gap-2 px-1.5">
-        <span className="grid size-7 shrink-0 place-items-center rounded-full border border-white/25">
-          <span className="size-1.5 rounded-full bg-white" />
+        <span className="grid size-7 shrink-0 place-items-center rounded-full border border-brand/40">
+          <span className="size-1.5 rounded-full bg-brand" />
         </span>
-        <span className={`font-display text-lg font-bold tracking-tight text-white ${collapsed ? "sr-only" : ""}`}>
+        <span className={`font-display text-lg font-bold tracking-tight text-foreground ${collapsed ? "sr-only" : ""}`}>
           Orbit
         </span>
       </NavLink>

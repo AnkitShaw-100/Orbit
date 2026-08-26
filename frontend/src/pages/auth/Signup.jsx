@@ -46,7 +46,7 @@ export default function Signup() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="text-white underline underline-offset-4">
+          <Link to="/login" className="text-foreground underline underline-offset-4">
             Sign in
           </Link>
         </>
@@ -78,12 +78,12 @@ export default function Signup() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-full bg-white py-3.5 text-sm font-semibold text-ink transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-ink transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
         >
           {busy ? "Creating account…" : "Create account"}
         </button>
 
-        <p className="text-[11px] leading-relaxed text-white/35">
+        <p className="text-[11px] leading-relaxed text-foreground/35">
           Orbit is a simulator. It never holds funds, never asks for a card, and
           cannot place an order on a real exchange.
         </p>

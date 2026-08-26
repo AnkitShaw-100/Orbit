@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { Bell, LogOut, Menu, Search, Wallet, X } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/context/authContext";
 import { useMe } from "@/hooks/useOrbit";
+import { useTheme } from "@/hooks/useTheme";
 import { formatUsd } from "@/lib/format";
 
 const TITLES = {
@@ -27,6 +28,7 @@ export default function AppShell() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const me = useMe();
+  const { resolved, toggle } = useTheme();
 
   const title = TITLES[pathname] ?? "Orbit";
   const initial = (me.data?.user?.name ?? "?").slice(0, 1).toUpperCase();
@@ -37,7 +39,7 @@ export default function AppShell() {
   };
 
   return (
-    <div className="flex min-h-screen bg-ink">
+    <div className="flex min-h-screen bg-void">
       {/* Pinned to the viewport with its own scroll, so a long page never
           drags the navigation out of reach. */}
       <div className="sticky top-0 hidden h-screen shrink-0 lg:block">
@@ -59,39 +61,52 @@ export default function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-line bg-panel/95 px-4 py-3.5 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-line bg-panel/85 px-4 py-3.5 backdrop-blur sm:px-6">
           <button
             type="button"
             onClick={() => setDrawerOpen((value) => !value)}
             aria-label={drawerOpen ? "Close menu" : "Open menu"}
-            className="text-white/70 lg:hidden"
+            className="text-foreground/70 lg:hidden"
           >
             {drawerOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
 
-          <h1 className="font-display text-base font-bold tracking-tight text-white">{title}</h1>
+          <h1 className="font-display text-base font-bold tracking-tight text-foreground">{title}</h1>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <Link
               to="/markets"
               aria-label="Search markets"
-              className="hidden size-9 place-items-center rounded-full border border-line text-white/60 transition-colors hover:text-white sm:grid"
+              className="hidden size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground sm:grid"
             >
               <Search className="size-4" aria-hidden="true" />
             </Link>
 
             <span className="hidden items-center gap-2 rounded-full border border-line px-3.5 py-2 sm:flex">
-              <Wallet className="size-4 text-white/45" aria-hidden="true" />
-              <span className="tabular text-sm font-medium text-white">
+              <Wallet className="size-4 text-foreground/45" aria-hidden="true" />
+              <span className="tabular text-sm font-medium text-foreground">
                 {me.data ? formatUsd(Number(me.data.wallet.balance)) : "—"}
               </span>
-              <span className="text-[11px] text-white/40">cash</span>
+              <span className="text-[11px] text-foreground/40">cash</span>
             </span>
 
             <button
               type="button"
+              onClick={toggle}
+              aria-label={resolved === "dark" ? "Switch to the light theme" : "Switch to the dark theme"}
+              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground"
+            >
+              {resolved === "dark" ? (
+                <Sun className="size-4" aria-hidden="true" />
+              ) : (
+                <Moon className="size-4" aria-hidden="true" />
+              )}
+            </button>
+
+            <button
+              type="button"
               aria-label="Notifications"
-              className="grid size-9 place-items-center rounded-full border border-line text-white/60 transition-colors hover:text-white"
+              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground"
             >
               <Bell className="size-4" aria-hidden="true" />
             </button>
@@ -99,7 +114,8 @@ export default function AppShell() {
             <Link
               to="/profile"
               aria-label="Your profile"
-              className="grid size-9 place-items-center rounded-full bg-white text-xs font-bold text-ink"
+              style={{ "--tint": "var(--color-brand)" }}
+              className="tint-chip grid size-9 place-items-center rounded-full text-xs font-bold"
             >
               {initial}
             </Link>
@@ -108,7 +124,7 @@ export default function AppShell() {
               type="button"
               onClick={handleSignOut}
               aria-label="Sign out"
-              className="grid size-9 place-items-center rounded-full border border-line text-white/60 transition-colors hover:border-loss/50 hover:text-loss"
+              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:border-loss/50 hover:text-loss"
             >
               <LogOut className="size-4" aria-hidden="true" />
             </button>
