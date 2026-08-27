@@ -64,11 +64,21 @@
     --color-faint: var(--text-faint);
 
     /* Stat tiles only. Each figure keeps the same hue everywhere it appears,
-       so a colour becomes a shorthand for a measure rather than decoration. */
-    --color-iris: #6366F1;
-    --color-mint: #34D399;
-    --color-ember: #F97316;
-    --color-sky: #38BDF8;
+       so a colour becomes a shorthand for a measure rather than decoration.
+
+       Theme-aware for the same reason gain and loss are: these are tuned to
+       glow against a near-black panel, and at that lightness the icon they
+       tint measures under 3:1 on paper. Mint was the worst at 1.92:1. */
+    --color-iris: var(--accent-iris);
+    --color-mint: var(--accent-mint);
+    --color-ember: var(--accent-ember);
+    --color-sky: var(--accent-sky);
+
+    /* What is legible *on* a filled market colour. Ink holds up on both gains,
+       but a loss fill flips: white clears AA on the light red, ink on the dark
+       one. Neither works for both, so the pairing follows the theme. */
+    --color-on-gain: var(--market-on-gain);
+    --color-on-loss: var(--market-on-loss);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -157,6 +167,13 @@
 
     --market-gain: #0B8F7B;
     --market-loss: #D13B33;
+    --market-on-gain: #0A0A0A;
+    --market-on-loss: #FFFFFF;
+
+    --accent-iris: #4F46E5;
+    --accent-mint: #0F8F6F;
+    --accent-ember: #C2410C;
+    --accent-sky: #0369A1;
 
     /* The hairline scrollbar reads against whatever it sits on. */
     --scroll-thumb: rgba(0, 0, 0, 0.22);
@@ -204,6 +221,13 @@
 
     --market-gain: #2DD4BF;
     --market-loss: #EF5350;
+    --market-on-gain: #0A0A0A;
+    --market-on-loss: #0A0A0A;
+
+    --accent-iris: #6366F1;
+    --accent-mint: #34D399;
+    --accent-ember: #F97316;
+    --accent-sky: #38BDF8;
 
     --scroll-thumb: rgba(255, 255, 255, 0.18);
 }

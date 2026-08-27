@@ -28,7 +28,7 @@ export default function PositionActions({
           type="button"
           onClick={onConfirm}
           disabled={pending}
-          className={`${base} bg-loss text-foreground hover:brightness-110 disabled:opacity-60`}
+          className={`${base} bg-loss text-on-loss hover:brightness-110 disabled:opacity-60`}
         >
           {pending ? "Closing…" : "Confirm close"}
         </button>

@@ -86,7 +86,7 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 type="button"
-                className="rounded-full bg-loss px-4 py-2 text-xs font-semibold text-white"
+                className="rounded-full bg-loss px-4 py-2 text-xs font-semibold text-on-loss"
               >
                 Yes, reset it
               </button>

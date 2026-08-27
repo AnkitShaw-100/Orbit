@@ -9,6 +9,7 @@ import { LiveDot } from "@/components/app/Toolbar";
 import { Loading } from "@/components/app/QueryState";
 import { useMarkets, usePlaceOrder, usePortfolio } from "@/hooks/useOrbit";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
+import { useTheme } from "@/hooks/useTheme";
 import { orbit } from "@/lib/api";
 import { formatPrice, formatUsd, formatVolume, signedPercent, signedUsd } from "@/lib/format";
 import { baseAsset, coinMeta } from "@/lib/markets";
@@ -42,6 +43,9 @@ export default function Trade() {
   const { data: prices, status } = useOrbitPrices();
   const portfolio = usePortfolio();
   const placeOrder = usePlaceOrder();
+  // The chart paints its own grid and labels, so it needs the resolved theme
+  // rather than the preference — "system" is not a palette.
+  const { resolved } = useTheme();
 
   const [range, setRange] = useState("15m");
   const [side, setSide] = useState("BUY");
@@ -393,7 +397,7 @@ export default function Trade() {
           {candles.length ? (
             <CandleChart
               data={candles}
-              theme="dark"
+              theme={resolved}
               livePrice={price}
               position={
                 heldQuantity
@@ -436,8 +440,8 @@ export default function Trade() {
                 className={`rounded-full py-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
                   side === option
                     ? option === "BUY"
-                      ? "bg-gain text-ink"
-                      : "bg-loss text-foreground"
+                      ? "bg-gain text-on-gain"
+                      : "bg-loss text-on-loss"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -559,8 +563,8 @@ export default function Trade() {
               blocked
                 ? "cursor-not-allowed bg-foreground/10 text-faint"
                 : side === "BUY"
-                  ? "bg-gain text-ink hover:brightness-110"
-                  : "bg-loss text-foreground hover:brightness-110"
+                  ? "bg-gain text-on-gain hover:brightness-110"
+                  : "bg-loss text-on-loss hover:brightness-110"
             }`}
           >
             {placeOrder.isPending
