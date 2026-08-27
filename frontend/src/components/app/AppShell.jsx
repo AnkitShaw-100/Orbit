@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { Bell, LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
+import { LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/context/authContext";
 import { useMe } from "@/hooks/useOrbit";
@@ -11,7 +11,6 @@ const TITLES = {
   "/dashboard": "Dashboard",
   "/markets": "Markets",
   "/trade": "Trade",
-  "/portfolio": "Portfolio",
   "/transactions": "Transactions",
   "/profile": "Profile",
   "/settings": "Settings",
@@ -66,7 +65,7 @@ export default function AppShell() {
             type="button"
             onClick={() => setDrawerOpen((value) => !value)}
             aria-label={drawerOpen ? "Close menu" : "Open menu"}
-            className="text-foreground/70 lg:hidden"
+            className="text-muted-foreground lg:hidden"
           >
             {drawerOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -77,38 +76,30 @@ export default function AppShell() {
             <Link
               to="/markets"
               aria-label="Search markets"
-              className="hidden size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground sm:grid"
+              className="hidden size-9 place-items-center rounded-full border border-line text-muted-foreground transition-colors hover:text-foreground sm:grid"
             >
               <Search className="size-4" aria-hidden="true" />
             </Link>
 
             <span className="hidden items-center gap-2 rounded-full border border-line px-3.5 py-2 sm:flex">
-              <Wallet className="size-4 text-foreground/45" aria-hidden="true" />
+              <Wallet className="size-4 text-muted-foreground" aria-hidden="true" />
               <span className="tabular text-sm font-medium text-foreground">
                 {me.data ? formatUsd(Number(me.data.wallet.balance)) : "—"}
               </span>
-              <span className="text-[11px] text-foreground/40">cash</span>
+              <span className="text-[11px] text-faint">cash</span>
             </span>
 
             <button
               type="button"
               onClick={toggle}
               aria-label={resolved === "dark" ? "Switch to the light theme" : "Switch to the dark theme"}
-              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground"
+              className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground transition-colors hover:text-foreground"
             >
               {resolved === "dark" ? (
                 <Sun className="size-4" aria-hidden="true" />
               ) : (
                 <Moon className="size-4" aria-hidden="true" />
               )}
-            </button>
-
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:text-foreground"
-            >
-              <Bell className="size-4" aria-hidden="true" />
             </button>
 
             <Link
@@ -124,7 +115,7 @@ export default function AppShell() {
               type="button"
               onClick={handleSignOut}
               aria-label="Sign out"
-              className="grid size-9 place-items-center rounded-full border border-line text-foreground/60 transition-colors hover:border-loss/50 hover:text-loss"
+              className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground transition-colors hover:border-loss/50 hover:text-loss"
             >
               <LogOut className="size-4" aria-hidden="true" />
             </button>

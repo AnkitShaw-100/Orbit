@@ -69,9 +69,9 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
       >
         <CoinIcon symbol={selected.symbol} className="size-5" />
         {selected.ticker}
-        <span className="font-normal text-foreground/35">/USDT</span>
+        <span className="font-normal text-faint">/USDT</span>
         <ChevronDown
-          className={`size-4 text-foreground/45 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`size-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
@@ -80,7 +80,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
         <div className="absolute left-0 top-full z-40 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-panel shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
           <div className="relative border-b border-line">
             <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-foreground/35"
+              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint"
               aria-hidden="true"
             />
             <input
@@ -91,7 +91,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
                 setShown(PAGE);
               }}
               placeholder={`Search ${symbols.length} markets`}
-              className="w-full bg-transparent py-3 pl-10 pr-3 text-sm text-foreground placeholder:text-foreground/30 focus:outline-none"
+              className="w-full bg-transparent py-3 pl-10 pr-3 text-sm text-foreground placeholder:text-faint focus:outline-none"
             />
           </div>
 
@@ -115,7 +115,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
 
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="block text-sm text-foreground">{coin.ticker}</span>
-                      <span className="block truncate text-[11px] text-foreground/40">{coin.name}</span>
+                      <span className="block truncate text-[11px] text-faint">{coin.name}</span>
                     </span>
 
                     <span className="text-right leading-tight">
@@ -134,7 +134,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
             })}
 
             {matches.length === 0 && (
-              <li className="px-4 py-8 text-center text-xs text-foreground/45">
+              <li className="px-4 py-8 text-center text-xs text-muted-foreground">
                 No market matches “{query}”
               </li>
             )}
@@ -144,7 +144,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
             <button
               type="button"
               onClick={() => setShown((count) => count + PAGE)}
-              className="w-full border-t border-line py-2.5 text-[11px] text-foreground/50 transition-colors hover:text-foreground"
+              className="w-full border-t border-line py-2.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
             >
               Show {Math.min(PAGE, matches.length - shown)} more of {matches.length}
             </button>

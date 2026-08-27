@@ -85,7 +85,7 @@ export default function MarketsTable({ tickers }) {
                     {coin.ticker}
                     <span className="text-ink/35">/USDT</span>
                   </p>
-                  <p className="text-xs text-ink/45">
+                  <p className="text-xs text-ink/60">
                     {formatVolume(data?.quoteVolume)} USDT
                   </p>
                 </div>
@@ -116,7 +116,7 @@ export default function MarketsTable({ tickers }) {
             </colgroup>
 
             <thead>
-              <tr className="text-[13px] text-ink/45">
+              <tr className="text-[13px] text-ink/60">
                 <th className="pb-4 font-normal">Name</th>
                 <th className="pb-4 text-right font-normal">Last Price</th>
                 <th className="pb-4 text-right font-normal">24h Change</th>
@@ -142,7 +142,7 @@ export default function MarketsTable({ tickers }) {
                             {coin.ticker}
                             <span className="text-ink/35">/USDT</span>
                           </p>
-                          <p className="text-xs text-ink/45">{coin.name}</p>
+                          <p className="text-xs text-ink/60">{coin.name}</p>
                         </div>
                       </div>
                     </td>
@@ -169,7 +169,7 @@ export default function MarketsTable({ tickers }) {
                       <p className="tabular text-[15px] text-ink">
                         {formatVolume(data?.quoteVolume)} USDT
                       </p>
-                      <p className="text-xs text-ink/40">Rolling 24h</p>
+                      <p className="text-xs text-ink/60">Rolling 24h</p>
                     </td>
                   </motion.tr>
                 );
@@ -179,7 +179,7 @@ export default function MarketsTable({ tickers }) {
         </div>
 
         {rows.length === 0 && (
-          <p className="border-t border-ink/10 py-12 text-center text-sm text-ink/45">
+          <p className="border-t border-ink/10 py-12 text-center text-sm text-ink/60">
             Orbit quotes every pair in USDT. Other quote currencies arrive with
             Phase 2.
           </p>

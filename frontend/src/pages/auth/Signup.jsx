@@ -83,7 +83,7 @@ export default function Signup() {
           {busy ? "Creating account…" : "Create account"}
         </button>
 
-        <p className="text-[11px] leading-relaxed text-foreground/35">
+        <p className="text-[11px] leading-relaxed text-faint">
           Orbit is a simulator. It never holds funds, never asks for a card, and
           cannot place an order on a real exchange.
         </p>

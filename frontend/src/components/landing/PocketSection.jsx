@@ -122,7 +122,7 @@ export default function PocketSection({ ticker }) {
                   ))}
                 </div>
 
-                <p className="mt-7 text-xs text-ink/50">Items</p>
+                <p className="mt-7 text-xs text-ink/60">Items</p>
                 <ul className="mt-2.5 space-y-2">
                   {HOLDINGS.map((holding, index) => (
                     <motion.li
@@ -135,11 +135,11 @@ export default function PocketSection({ ticker }) {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-ink">{holding.symbol}</p>
-                        <p className="text-[10px] text-ink/45">{holding.name}</p>
+                        <p className="text-[10px] text-ink/60">{holding.name}</p>
                       </div>
                       <div className="text-right">
                         <p className="tabular text-xs font-medium text-ink">{holding.qty}</p>
-                        <p className="tabular text-[10px] text-ink/45">${holding.value}</p>
+                        <p className="tabular text-[10px] text-ink/60">${holding.value}</p>
                       </div>
                     </motion.li>
                   ))}

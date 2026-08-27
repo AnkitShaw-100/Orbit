@@ -4,7 +4,6 @@ import RequireAuth from "./components/app/RequireAuth";
 import CustomCursor from "./components/CustomCursor";
 import Dashboard from "./pages/app/Dashboard";
 import Markets from "./pages/app/Markets";
-import Portfolio from "./pages/app/Portfolio";
 import Profile from "./pages/app/Profile";
 import Settings from "./pages/app/Settings";
 import Trade from "./pages/app/Trade";
@@ -35,7 +34,6 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/markets" element={<Markets />} />
           <Route path="/trade" element={<Trade />} />
-          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />

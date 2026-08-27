@@ -77,7 +77,7 @@ export default function WhyOrbit({ ticker }) {
                       className={`rounded px-1 transition-colors ${
                         percent === option
                           ? "font-semibold text-ink"
-                          : "text-ink/45 hover:text-ink"
+                          : "text-ink/60 hover:text-ink"
                       }`}
                     >
                       {option}%
@@ -86,7 +86,7 @@ export default function WhyOrbit({ ticker }) {
                 </div>
               </div>
 
-              <p className="tabular mt-4 text-xs text-ink/50">
+              <p className="tabular mt-4 text-xs text-ink/60">
                 Balance {BALANCE.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD
               </p>
 
@@ -104,7 +104,7 @@ export default function WhyOrbit({ ticker }) {
                     key={label}
                     className="flex items-center justify-between gap-3 rounded-xl bg-mist px-4 py-3.5"
                   >
-                    <dt className="flex items-center gap-1.5 text-[13px] text-ink/50">
+                    <dt className="flex items-center gap-1.5 text-[13px] text-ink/60">
                       {live && (
                         <span className="size-1.5 animate-pulse rounded-full bg-gain" aria-hidden="true" />
                       )}

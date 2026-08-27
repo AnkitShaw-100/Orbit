@@ -16,20 +16,20 @@ export default function TradeCard({ ticker }) {
     <div className="w-[268px] rounded-[26px] bg-white p-5 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.35)]">
       <header className="flex items-center justify-between">
         <span className="font-display text-sm font-bold tracking-tight text-ink">Buy</span>
-        <span className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink/50">
+        <span className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink/60">
           Market
         </span>
       </header>
 
       <div className="mt-4 rounded-2xl bg-mist p-3.5">
-        <span className="text-[11px] text-ink/50">Spend</span>
+        <span className="text-[11px] text-ink/60">Spend</span>
         <div className="mt-1 flex items-baseline justify-between">
           <span className="tabular font-display text-lg font-bold text-ink">
             {formatUsd(DEMO_SPEND)}
           </span>
           <span className="text-[11px] font-medium text-ink/60">Cash</span>
         </div>
-        <span className="tabular mt-1 block text-[10px] text-ink/40">
+        <span className="tabular mt-1 block text-[10px] text-ink/60">
           Balance {formatUsd(STARTING_CASH)}
         </span>
       </div>
@@ -41,14 +41,14 @@ export default function TradeCard({ ticker }) {
       </div>
 
       <div className="mt-2 rounded-2xl bg-mist p-3.5">
-        <span className="text-[11px] text-ink/50">Receive</span>
+        <span className="text-[11px] text-ink/60">Receive</span>
         <div className="mt-1 flex items-baseline justify-between">
           <span className="tabular font-display text-lg font-bold text-ink">
             {quantity ? quantity.toFixed(5) : "—"}
           </span>
           <span className="text-[11px] font-medium text-ink/60">BTC</span>
         </div>
-        <span className="tabular mt-1 block text-[10px] text-ink/40">
+        <span className="tabular mt-1 block text-[10px] text-ink/60">
           1 BTC = ${formatPrice(price)}
         </span>
       </div>

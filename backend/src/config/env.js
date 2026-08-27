@@ -28,7 +28,12 @@ const env = {
   binanceRestUrl: process.env.BINANCE_REST_URL ?? "https://api.binance.com",
   binanceWsUrl: process.env.BINANCE_WS_URL ?? "wss://stream.binance.com:9443",
 
-  clientUrl: process.env.CLIENT_URL ?? "http://localhost:5173",
+  // The browser origins allowed to call the API. Comma separated, so a local
+  // setup can list both Vite ports without needing EXTRA_ORIGINS as well.
+  clientUrls: (process.env.CLIENT_URL ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 
   // Any additional origins allowed to call the API, comma separated.
   extraOrigins: (process.env.EXTRA_ORIGINS ?? "")

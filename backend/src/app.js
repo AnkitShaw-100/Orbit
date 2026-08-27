@@ -28,7 +28,7 @@ app.use(
       if (!origin) return callback(null, true);
 
       const allowed =
-        origin === env.clientUrl ||
+        env.clientUrls.includes(origin) ||
         env.extraOrigins.includes(origin) ||
         (env.vercelProject && new RegExp(`^https://${env.vercelProject}-[a-z0-9-]+\\.vercel\\.app$`).test(origin));
 

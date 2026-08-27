@@ -11,7 +11,7 @@ export default function Footer() {
             </span>
             <span className="font-display text-base font-bold tracking-tight text-white">Orbit</span>
           </div>
-          <p className="mt-3 max-w-[42ch] text-xs leading-relaxed text-white/40">
+          <p className="mt-3 max-w-[42ch] text-xs leading-relaxed text-white/55">
             Orbit is a paper trading simulator. All balances are virtual and no
             real funds are ever traded. Market data from Binance.
           </p>
@@ -27,7 +27,7 @@ export default function Footer() {
             <Link
               key={link.label}
               to={link.to}
-              className="rounded-sm text-xs text-white/50 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+              className="rounded-sm text-xs text-white/70 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             >
               {link.label}
             </Link>

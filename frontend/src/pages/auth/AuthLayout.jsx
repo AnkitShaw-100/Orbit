@@ -19,11 +19,11 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
           <h1 className="font-display text-[clamp(1.9rem,3.5vw,2.6rem)] font-bold leading-[1.05] tracking-[-0.035em] text-foreground">
             {title}
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/50">{subtitle}</p>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
 
           <div className="mt-9">{children}</div>
 
-          <p className="mt-8 text-sm text-foreground/45">{footer}</p>
+          <p className="mt-8 text-sm text-muted-foreground">{footer}</p>
         </div>
       </div>
 
@@ -43,15 +43,15 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
 export function Field({ label, type = "text", name, placeholder, autoComplete, hint }) {
   return (
     <label className="block">
-      <span className="text-xs text-foreground/55">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <input
         type={type}
         name={name}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="mt-2 w-full rounded-xl border border-foreground/15 bg-foreground/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-foreground/25 focus:border-foreground/45 focus:outline-none"
+        className="mt-2 w-full rounded-xl border border-foreground/15 bg-foreground/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-faint focus:border-foreground/45 focus:outline-none"
       />
-      {hint && <span className="mt-1.5 block text-[11px] text-foreground/35">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-[11px] text-faint">{hint}</span>}
     </label>
   );
 }

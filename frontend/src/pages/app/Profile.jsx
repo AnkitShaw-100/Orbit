@@ -4,7 +4,7 @@ import { useState } from "react";
 // only approximates. One family across all four so the strokes match.
 import { TbChartBar, TbReceipt2, TbScale, TbTargetArrow } from "react-icons/tb";
 import CoinIcon from "@/components/landing/CoinIcon";
-import { Panel, StatCard } from "@/components/app/Panel";
+import { Cell, CellRow, Panel, StatCard } from "@/components/app/Panel";
 import {
   Dialog,
   DialogContent,
@@ -43,31 +43,6 @@ const LOADED_AT = Date.now();
 /** A realised figure with its sign, always as money. */
 function signedUsd(value) {
   return `${value >= 0 ? "+" : "−"}${formatUsd(Math.abs(value))}`;
-}
-
-/**
- * The three numbers a paper trader checks before reading any rows: the best
- * result, the worst, and what the average trade actually returns. The average
- * is the one a win rate hides — six wins against twelve losses can still be
- * the better book if the wins are the large ones.
- */
-function Cell({ label, value, tone = "text-foreground", children }) {
-  return (
-    <div className="flex flex-col gap-2 px-5 py-4 sm:px-6">
-      <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">{label}</p>
-      <p className={`tabular font-display text-xl font-bold tracking-[-0.03em] ${tone}`}>{value}</p>
-      {children}
-    </div>
-  );
-}
-
-/** The row of cells both cards use, so the profile and the history rhyme. */
-function CellRow({ children }) {
-  return (
-    <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-      {children}
-    </div>
-  );
 }
 
 function Highlight({ label, trade, value, tone, hint }) {

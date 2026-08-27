@@ -2,7 +2,6 @@ import { NavLink } from "react-router";
 import {
   LayoutDashboard,
   CandlestickChart,
-  Briefcase,
   Receipt,
   Store,
   Settings as SettingsIcon,
@@ -13,7 +12,6 @@ const LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/markets", label: "Markets", icon: Store },
   { to: "/trade", label: "Trade", icon: CandlestickChart },
-  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/transactions", label: "Transactions", icon: Receipt },
 ];
 
@@ -34,7 +32,7 @@ function Item({ to, label, icon: Icon, collapsed }) {
         `relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
           isActive
             ? "bg-brand/10 text-foreground"
-            : "text-foreground/55 hover:bg-foreground/[0.04] hover:text-foreground"
+            : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
         }`
       }
     >

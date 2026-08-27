@@ -57,11 +57,11 @@ export default function HowItWorks() {
                 className="block h-px origin-left bg-white/40"
               />
 
-              <span className="tabular mt-4 block font-display text-xs font-bold tracking-[0.2em] text-white/30">
+              <span className="tabular mt-4 block font-display text-xs font-bold tracking-[0.2em] text-white/55">
                 {step}
               </span>
               <h3 className="mt-3 font-display text-lg font-bold tracking-tight text-white">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/50">{body}</p>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">{body}</p>
             </motion.li>
           ))}
         </ol>

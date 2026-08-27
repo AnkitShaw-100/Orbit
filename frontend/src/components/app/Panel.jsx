@@ -12,6 +12,30 @@ export function Panel({ title, action, children, className = "", bodyClassName =
   );
 }
 
+/**
+ * One figure inside a banded row — the account facts a page states once and
+ * does not repeat. Smaller and quieter than a StatCard: a StatCard is a tile
+ * that stands alone, a Cell is a column in a band that reads left to right.
+ */
+export function Cell({ label, value, tone = "text-foreground", children }) {
+  return (
+    <div className="flex flex-col gap-2 px-5 py-4 sm:px-6">
+      <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">{label}</p>
+      <p className={`tabular font-display text-xl font-bold tracking-[-0.03em] ${tone}`}>{value}</p>
+      {children}
+    </div>
+  );
+}
+
+/** The row of cells the summary bands use, so every page's band rhymes. */
+export function CellRow({ children }) {
+  return (
+    <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      {children}
+    </div>
+  );
+}
+
 /** The hue a tile is tinted with. Each measure keeps its colour across pages. */
 const ACCENTS = {
   iris: "var(--color-iris)",
@@ -40,7 +64,7 @@ export function StatCard({ label, value, hint, tone = "neutral", accent, icon: I
       className={`rounded-2xl border p-5 ${tint ? "tint" : "border-line bg-panel"}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs text-foreground/50">{label}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
         {Icon && (
           <span className="tint-chip grid size-10 shrink-0 place-items-center rounded-xl">
             <Icon className="size-5" aria-hidden="true" />
@@ -51,7 +75,7 @@ export function StatCard({ label, value, hint, tone = "neutral", accent, icon: I
       <p className={`tabular mt-3 font-display text-2xl font-bold tracking-[-0.03em] ${toneClass}`}>
         {value}
       </p>
-      {hint && <p className="tabular mt-1 text-xs text-foreground/40">{hint}</p>}
+      {hint && <p className="tabular mt-1 text-xs text-faint">{hint}</p>}
     </div>
   );
 }

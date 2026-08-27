@@ -10,7 +10,7 @@ export default function NotFound() {
         <h1 className="mt-6 font-display text-2xl font-bold tracking-tight text-white">
           Nothing at this address
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-white/50">
+        <p className="mt-3 text-sm leading-relaxed text-white/70">
           This page doesn't exist yet. Head back and pick a route from the nav.
         </p>
         <Link

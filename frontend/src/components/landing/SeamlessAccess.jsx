@@ -70,7 +70,7 @@ export default function SeamlessAccess({ ticker }) {
               </span>
               {stats.map(({ label, value, always }) => (
                 <div key={label} className={always ? "" : "hidden sm:block"}>
-                  <p className="text-[10px] text-ink/40">{label}</p>
+                  <p className="text-[10px] text-ink/60">{label}</p>
                   <p className="tabular text-xs font-medium text-ink">{value}</p>
                 </div>
               ))}
@@ -85,7 +85,7 @@ export default function SeamlessAccess({ ticker }) {
                     type="button"
                     onClick={() => setRange(option.label)}
                     className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${
-                      range === option.label ? "bg-ink text-white" : "text-ink/45 hover:text-ink"
+                      range === option.label ? "bg-ink text-white" : "text-ink/60 hover:text-ink"
                     }`}
                   >
                     {option.label}

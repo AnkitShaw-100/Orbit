@@ -33,14 +33,14 @@ export default function Transactions() {
         <label className="relative min-w-0 flex-1 sm:max-w-xs">
           <span className="sr-only">Search transactions</span>
           <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-foreground/35"
+            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint"
             aria-hidden="true"
           />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filter by coin"
-            className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-foreground/35 focus:border-foreground/30 focus:outline-none"
+            className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-faint focus:border-foreground/30 focus:outline-none"
           />
         </label>
 
@@ -53,7 +53,7 @@ export default function Transactions() {
               className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
                 filter === option
                   ? "border-brand bg-brand text-ink"
-                  : "border-line text-foreground/60 hover:text-foreground"
+                  : "border-line text-muted-foreground hover:text-foreground"
               }`}
             >
               {option}
@@ -61,7 +61,7 @@ export default function Transactions() {
           ))}
         </div>
 
-        <p className="tabular ml-auto text-xs text-foreground/45">
+        <p className="tabular ml-auto text-xs text-muted-foreground">
           Realised P&L{" "}
           <span className={realised >= 0 ? "text-gain" : "text-loss"}>
             {realised >= 0 ? "+" : "−"}
@@ -71,7 +71,7 @@ export default function Transactions() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-panel">
-        <div className="hidden grid-cols-[auto_1fr_1fr_1fr_1fr_1.2fr] gap-4 border-b border-line px-5 py-3 text-xs text-foreground/40 lg:grid">
+        <div className="hidden grid-cols-[auto_1fr_1fr_1fr_1fr_1.2fr] gap-4 border-b border-line px-5 py-3 text-xs text-faint lg:grid">
           <span className="w-14">Side</span>
           <span>Asset</span>
           <span className="text-right">Quantity</span>
@@ -106,15 +106,15 @@ export default function Transactions() {
 
                   <div className="min-w-0 leading-tight">
                     <p className="text-sm text-foreground">{tickerOf(row.symbol)}</p>
-                    <p className="tabular text-xs text-foreground/40 lg:hidden">
+                    <p className="tabular text-xs text-faint lg:hidden">
                       {Number(order?.quantity ?? 0)} @ {formatPrice(Number(order?.executionPrice ?? 0))}
                     </p>
                   </div>
 
-                  <span className="tabular hidden text-right text-sm text-foreground/70 lg:block">
+                  <span className="tabular hidden text-right text-sm text-muted-foreground lg:block">
                     {Number(order?.quantity ?? 0)}
                   </span>
-                  <span className="tabular hidden text-right text-sm text-foreground/70 lg:block">
+                  <span className="tabular hidden text-right text-sm text-muted-foreground lg:block">
                     {formatPrice(Number(order?.executionPrice ?? 0))}
                   </span>
                   <span className="tabular hidden text-right text-sm text-foreground lg:block">
@@ -122,7 +122,7 @@ export default function Transactions() {
                   </span>
 
                   <div className="text-right leading-tight">
-                    <p className="tabular text-xs text-foreground/45">
+                    <p className="tabular text-xs text-muted-foreground">
                       {new Date(row.createdAt).toLocaleString("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -132,7 +132,7 @@ export default function Transactions() {
                     </p>
                     <p className="tabular text-xs">
                       {realizedPnl == null ? (
-                        <span className="text-foreground/25">—</span>
+                        <span className="text-faint">—</span>
                       ) : (
                         <span className={realizedPnl >= 0 ? "text-gain" : "text-loss"}>
                           {realizedPnl >= 0 ? "+" : "−"}
@@ -154,7 +154,7 @@ export default function Transactions() {
                 ? "No transactions yet"
                 : "No transactions match that filter"}
             </p>
-            <p className="mt-1.5 text-xs text-foreground/45">
+            <p className="mt-1.5 text-xs text-muted-foreground">
               {transactions.data.transactions.length === 0
                 ? "Every fill you make is recorded here, with realised P&L on sells."
                 : "Clear the search to see everything."}
@@ -171,7 +171,7 @@ export default function Transactions() {
         )}
       </div>
 
-      <p className="text-[11px] text-foreground/30">
+      <p className="text-[11px] text-faint">
         Realised P&L is recorded on sells only. Buys change your average price
         rather than booking a profit.
       </p>

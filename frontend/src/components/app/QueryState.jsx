@@ -22,7 +22,7 @@ export function Failed({ error, onRetry }) {
       <p className="text-sm text-foreground">
         {offline ? "Can't reach the Orbit API" : error.message}
       </p>
-      <p className="mx-auto mt-1.5 max-w-[46ch] text-xs leading-relaxed text-foreground/45">
+      <p className="mx-auto mt-1.5 max-w-[46ch] text-xs leading-relaxed text-muted-foreground">
         {offline
           ? "Your positions are safe — this screen just can't load them right now. Check the API is running, then try again."
           : "Nothing was changed."}
@@ -31,7 +31,7 @@ export function Failed({ error, onRetry }) {
         <button
           type="button"
           onClick={onRetry}
-          className="mt-5 rounded-full border border-line px-5 py-2.5 text-xs font-medium text-foreground/75 transition-colors hover:border-foreground hover:text-foreground"
+          className="mt-5 rounded-full border border-line px-5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
         >
           Try again
         </button>

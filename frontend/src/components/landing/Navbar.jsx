@@ -5,7 +5,7 @@ import { Menu, X } from "lucide-react";
 const LINKS = [
   { label: "Markets", to: "/markets" },
   { label: "How it works", to: "/#how-it-works" },
-  { label: "Portfolio", to: "/portfolio" },
+  { label: "Dashboard", to: "/dashboard" },
 ];
 
 export default function Navbar() {
