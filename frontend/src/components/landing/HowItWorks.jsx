@@ -33,7 +33,7 @@ export default function HowItWorks() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.6, ease: EASE }}
-          className="h2-section max-w-[18ch] text-white"
+          className="h2-section max-w-[18ch] text-foreground"
         >
           Three steps to your first trade
         </motion.h2>
@@ -54,14 +54,14 @@ export default function HowItWorks() {
                 whileInView={{ scaleX: 1 }}
                 viewport={{ once: true, amount: 0.4 }}
                 transition={{ duration: 0.7, delay: index * 0.12, ease: EASE }}
-                className="block h-px origin-left bg-white/40"
+                className="block h-px origin-left bg-brand/50"
               />
 
-              <span className="tabular mt-4 block font-display text-xs font-bold tracking-[0.2em] text-white/55">
+              <span className="tabular mt-4 block font-mono text-[11px] font-bold tracking-[0.2em] text-brand">
                 {step}
               </span>
-              <h3 className="mt-3 font-display text-lg font-bold tracking-tight text-white">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/70">{body}</p>
+              <h3 className="mt-3 font-display text-lg font-bold tracking-tight text-foreground">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
             </motion.li>
           ))}
         </ol>

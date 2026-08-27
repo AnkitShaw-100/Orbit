@@ -50,34 +50,34 @@ export default function SeamlessAccess({ ticker }) {
   return (
     <section className="section">
       <div className="shell grid overflow-hidden rounded-[26px] lg:grid-cols-[minmax(0,40%)_1fr]">
-        <div className="bg-gradient-to-br from-grad-lilac via-[#C7D2FE] to-[#BFE3E0] px-6 py-10 sm:px-12 sm:py-14 lg:py-20">
-          <h2 className="h2-section max-w-[15ch] text-ink">
+        <div className="brand-wash relative border-b border-line px-6 py-10 sm:px-12 sm:py-14 lg:border-r lg:border-b-0 lg:py-20">
+          <h2 className="h2-section relative max-w-[15ch] text-foreground">
             The whole desk, in a browser tab
           </h2>
-          <p className="mt-5 max-w-[38ch] text-[15px] leading-relaxed text-ink/65 sm:mt-6">
+          <p className="relative mt-5 max-w-[38ch] text-[15px] leading-relaxed text-muted-foreground sm:mt-6">
             Chart, order ticket and open positions on one screen. Nothing to
             install, nothing to fund — sign in and the market is already moving.
           </p>
         </div>
 
-        <div className="flex bg-mist p-3 sm:p-7">
+        <div className="flex bg-void p-3 sm:p-7">
           {/* Fills the column so the card's height matches the gradient panel
               instead of leaving mist showing beneath it. */}
-          <div className="flex w-full flex-col rounded-2xl bg-white p-3.5 sm:p-5">
+          <div className="flex w-full flex-col rounded-2xl border border-line bg-panel p-3.5 sm:p-5">
             <header className="flex flex-wrap items-center gap-x-5 gap-y-2.5 sm:gap-x-8 sm:gap-y-3">
-              <span className="rounded-full bg-mist px-3 py-1.5 text-xs font-semibold text-ink">
+              <span className="rounded-full border border-line bg-panel-2 px-3 py-1.5 text-xs font-semibold text-foreground">
                 BTC/USDT
               </span>
               {stats.map(({ label, value, always }) => (
                 <div key={label} className={always ? "" : "hidden sm:block"}>
-                  <p className="text-[10px] text-ink/60">{label}</p>
-                  <p className="tabular text-xs font-medium text-ink">{value}</p>
+                  <p className="text-[10px] text-faint">{label}</p>
+                  <p className="tabular text-xs font-medium text-foreground">{value}</p>
                 </div>
               ))}
             </header>
 
             <div className="mt-6 flex items-center justify-between">
-              <h3 className="font-display text-lg font-bold tracking-tight text-ink">Performance</h3>
+              <h3 className="font-display text-lg font-bold tracking-tight text-foreground">Performance</h3>
               <div className="flex gap-1">
                 {RANGES.map((option) => (
                   <button
@@ -85,7 +85,7 @@ export default function SeamlessAccess({ ticker }) {
                     type="button"
                     onClick={() => setRange(option.label)}
                     className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${
-                      range === option.label ? "bg-ink text-white" : "text-ink/60 hover:text-ink"
+                      range === option.label ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {option.label}
@@ -96,17 +96,17 @@ export default function SeamlessAccess({ ticker }) {
 
             {/* The chart absorbs the leftover height rather than the card
                 ending short of the panel. */}
-            <div className="mt-4 min-h-48 flex-1 rounded-xl border border-ink/10 p-2">
-              <CandleChart data={candles} livePrice={price} />
+            <div className="mt-4 min-h-48 flex-1 rounded-xl border border-line p-2">
+              <CandleChart data={candles} theme="dark" livePrice={price} />
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl bg-mist p-4">
+              <div className="rounded-xl border border-line bg-panel-2 p-4">
                 <div className="flex gap-2">
-                  <span className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white">
+                  <span className="rounded-lg bg-gain px-3 py-1.5 text-xs font-semibold text-on-gain">
                     Buy BTC
                   </span>
-                  <span className="rounded-lg border border-ink/15 px-3 py-1.5 text-xs font-semibold text-ink">
+                  <span className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-muted-foreground">
                     Sell BTC
                   </span>
                 </div>
@@ -117,15 +117,15 @@ export default function SeamlessAccess({ ticker }) {
                     ["Total", "50 000.00 USD"],
                   ].map(([label, value]) => (
                     <div key={label} className="flex items-center justify-between gap-3">
-                      <dt className="text-xs text-ink/55">{label}</dt>
-                      <dd className="tabular text-xs font-medium text-ink">{value}</dd>
+                      <dt className="text-xs text-faint">{label}</dt>
+                      <dd className="tabular text-xs font-medium text-foreground">{value}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
 
-              <div className="rounded-xl bg-mist p-4">
-                <p className="text-xs font-semibold text-ink">Open positions</p>
+              <div className="rounded-xl border border-line bg-panel-2 p-4">
+                <p className="text-xs font-semibold text-foreground">Open positions</p>
                 <ul className="mt-3 space-y-2">
                   {[
                     ["BTC", "0.7821", "+4.10%"],
@@ -133,8 +133,8 @@ export default function SeamlessAccess({ ticker }) {
                     ["SOL", "180.00", "+0.86%"],
                   ].map(([symbol, qty, pnl]) => (
                     <li key={symbol} className="flex items-center justify-between gap-3">
-                      <span className="w-10 shrink-0 text-xs font-medium text-ink">{symbol}</span>
-                      <span className="tabular flex-1 text-right text-xs text-ink/70">{qty}</span>
+                      <span className="w-10 shrink-0 text-xs font-medium text-foreground">{symbol}</span>
+                      <span className="tabular flex-1 text-right text-xs text-muted-foreground">{qty}</span>
                       <span
                         className={`tabular w-16 shrink-0 text-right text-xs font-medium ${
                           pnl.startsWith("+") ? "text-gain" : "text-loss"

@@ -33,7 +33,7 @@ export default function MarketsTable({ tickers }) {
 
   return (
     <section className="section">
-      <div className="shell rounded-[26px] bg-white px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+      <div className="shell rounded-2xl border border-line bg-panel px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
         <motion.header
           initial={reduceMotion ? false : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -41,7 +41,7 @@ export default function MarketsTable({ tickers }) {
           transition={{ duration: 0.6, ease: EASE }}
           className="flex flex-wrap items-center justify-between gap-5"
         >
-          <h2 className="h2-section text-ink">
+          <h2 className="h2-section text-foreground">
             Markets
           </h2>
 
@@ -53,8 +53,8 @@ export default function MarketsTable({ tickers }) {
                 onClick={() => setFilter(option)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors sm:px-5 sm:py-2 sm:text-[13px] ${
                   filter === option
-                    ? "border-ink bg-ink text-white"
-                    : "border-ink/15 text-ink hover:border-ink/40"
+                    ? "border-brand bg-brand text-ink"
+                    : "border-line text-muted-foreground hover:border-brand/50 hover:text-brand"
                 }`}
               >
                 {option}
@@ -74,18 +74,18 @@ export default function MarketsTable({ tickers }) {
               <motion.li
                 key={coin.symbol}
                 {...rowMotion(index)}
-                className="flex items-center gap-3 border-t border-ink/10 py-4"
+                className="flex items-center gap-3 border-t border-line py-4"
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-ink text-white">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
                   <CoinIcon symbol={coin.symbol} />
                 </span>
 
                 <div className="min-w-0 flex-1 leading-tight">
-                  <p className="text-sm text-ink">
+                  <p className="text-sm text-foreground">
                     {coin.ticker}
-                    <span className="text-ink/35">/USDT</span>
+                    <span className="text-faint">/USDT</span>
                   </p>
-                  <p className="text-xs text-ink/60">
+                  <p className="text-xs text-muted-foreground">
                     {formatVolume(data?.quoteVolume)} USDT
                   </p>
                 </div>
@@ -95,7 +95,7 @@ export default function MarketsTable({ tickers }) {
                 </div>
 
                 <div className="shrink-0 text-right leading-tight">
-                  <p className="tabular text-sm text-ink">{formatPrice(data?.price)}</p>
+                  <p className="tabular text-sm text-foreground">{formatPrice(data?.price)}</p>
                   <p className={`tabular text-xs ${isUp ? "text-gain" : "text-loss"}`}>
                     {formatPercent(data?.changePct)}
                   </p>
@@ -116,7 +116,7 @@ export default function MarketsTable({ tickers }) {
             </colgroup>
 
             <thead>
-              <tr className="text-[13px] text-ink/60">
+              <tr className="text-[13px] text-muted-foreground">
                 <th className="pb-4 font-normal">Name</th>
                 <th className="pb-4 text-right font-normal">Last Price</th>
                 <th className="pb-4 text-right font-normal">24h Change</th>
@@ -131,23 +131,23 @@ export default function MarketsTable({ tickers }) {
                 const isUp = (data?.changePct ?? 0) >= 0;
 
                 return (
-                  <motion.tr key={coin.symbol} {...rowMotion(index)} className="border-t border-ink/10">
+                  <motion.tr key={coin.symbol} {...rowMotion(index)} className="border-t border-line">
                     <td className="py-4">
                       <div className="flex items-center gap-3">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-ink text-white">
+                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
                           <CoinIcon symbol={coin.symbol} />
                         </span>
                         <div className="leading-tight">
-                          <p className="text-[15px] text-ink">
+                          <p className="text-[15px] text-foreground">
                             {coin.ticker}
-                            <span className="text-ink/35">/USDT</span>
+                            <span className="text-faint">/USDT</span>
                           </p>
-                          <p className="text-xs text-ink/60">{coin.name}</p>
+                          <p className="text-xs text-muted-foreground">{coin.name}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="tabular py-4 text-right text-[15px] leading-tight text-ink">
+                    <td className="tabular py-4 text-right text-[15px] leading-tight text-foreground">
                       {formatPrice(data?.price)}
                     </td>
 
@@ -166,10 +166,10 @@ export default function MarketsTable({ tickers }) {
                     </td>
 
                     <td className="py-4 text-right leading-tight">
-                      <p className="tabular text-[15px] text-ink">
+                      <p className="tabular text-[15px] text-foreground">
                         {formatVolume(data?.quoteVolume)} USDT
                       </p>
-                      <p className="text-xs text-ink/60">Rolling 24h</p>
+                      <p className="text-xs text-muted-foreground">Rolling 24h</p>
                     </td>
                   </motion.tr>
                 );
@@ -179,7 +179,7 @@ export default function MarketsTable({ tickers }) {
         </div>
 
         {rows.length === 0 && (
-          <p className="border-t border-ink/10 py-12 text-center text-sm text-ink/60">
+          <p className="border-t border-line py-12 text-center text-sm text-muted-foreground">
             Orbit quotes every pair in USDT. Other quote currencies arrive with
             Phase 2.
           </p>
@@ -188,7 +188,7 @@ export default function MarketsTable({ tickers }) {
         <div className="mt-10 flex justify-center">
           <Link
             to="/markets"
-            className="rounded-full border border-ink/20 px-8 py-3 text-sm font-medium text-ink transition-colors hover:border-ink"
+            className="rounded-full border border-line px-8 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/50 hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
           >
             See more
           </Link>

@@ -27,11 +27,11 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
         </div>
       </div>
 
-      <div className="orbit-gradient relative hidden flex-col justify-end p-12 lg:flex">
-        <p className="max-w-[22ch] font-display text-3xl font-bold leading-[1.05] tracking-[-0.035em] text-ink">
+      <div className="brand-wash relative hidden flex-col justify-end border-l border-line p-12 lg:flex">
+        <p className="relative max-w-[22ch] font-display text-3xl font-bold leading-[1.05] tracking-[-0.035em] text-foreground">
           Every account starts at exactly $100,000.
         </p>
-        <p className="mt-4 max-w-[38ch] text-sm leading-relaxed text-ink/60">
+        <p className="relative mt-4 max-w-[38ch] text-sm leading-relaxed text-muted-foreground">
           Same starting line, real market prices. What happens next is the part
           worth learning.
         </p>

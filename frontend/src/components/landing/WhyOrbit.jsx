@@ -30,24 +30,24 @@ export default function WhyOrbit({ ticker }) {
     <section className="section">
       <div className="shell grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:gap-10">
         <div>
-          <h2 className="h2-section max-w-[12ch] text-white">
+          <h2 className="h2-section max-w-[12ch] text-foreground">
             Built to teach, not to flatter
           </h2>
 
           <ul className="mt-10 space-y-5">
             {POINTS.map((point) => (
               <li key={point} className="flex items-center gap-3.5">
-                <FaCircleCheck className="size-6 shrink-0 text-white/85" aria-hidden="true" />
-                <span className="text-[15px] text-white/75">{point}</span>
+                <FaCircleCheck className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="text-[15px] text-muted-foreground">{point}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="relative mx-auto w-full max-w-120">
-          {/* Order ticket — gradient edge, matching the reference's framed card. */}
-          <div className="orbit-gradient rounded-[22px] p-[3px] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.85)]">
-            <div className="rounded-[19px] bg-white p-6">
+          {/* The order ticket as the app actually draws it. */}
+          <div className="rounded-2xl border border-line shadow-[0_40px_80px_-30px_rgba(0,0,0,0.85)]">
+            <div className="rounded-2xl bg-panel p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex gap-2">
                   {["buy", "sell"].map((option) => (
@@ -58,8 +58,10 @@ export default function WhyOrbit({ ticker }) {
                       aria-pressed={side === option}
                       className={`rounded-lg px-3.5 py-2 text-xs font-semibold capitalize transition-colors ${
                         side === option
-                          ? "bg-ink text-white"
-                          : "border border-ink/15 text-ink hover:border-ink/40"
+                          ? option === "buy"
+                            ? "bg-gain text-on-gain"
+                            : "bg-loss text-on-loss"
+                          : "border border-line text-muted-foreground hover:border-brand/50 hover:text-brand"
                       }`}
                     >
                       {option} BTC
@@ -76,8 +78,8 @@ export default function WhyOrbit({ ticker }) {
                       aria-pressed={percent === option}
                       className={`rounded px-1 transition-colors ${
                         percent === option
-                          ? "font-semibold text-ink"
-                          : "text-ink/60 hover:text-ink"
+                          ? "font-semibold text-brand"
+                          : "text-faint hover:text-foreground"
                       }`}
                     >
                       {option}%
@@ -86,7 +88,7 @@ export default function WhyOrbit({ ticker }) {
                 </div>
               </div>
 
-              <p className="tabular mt-4 text-xs text-ink/60">
+              <p className="tabular mt-4 text-xs text-muted-foreground">
                 Balance {BALANCE.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD
               </p>
 
@@ -102,15 +104,15 @@ export default function WhyOrbit({ ticker }) {
                 ].map(([label, value, live]) => (
                   <div
                     key={label}
-                    className="flex items-center justify-between gap-3 rounded-xl bg-mist px-4 py-3.5"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel-2 px-4 py-3.5"
                   >
-                    <dt className="flex items-center gap-1.5 text-[13px] text-ink/60">
+                    <dt className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
                       {live && (
                         <span className="size-1.5 animate-pulse rounded-full bg-gain" aria-hidden="true" />
                       )}
                       {label}
                     </dt>
-                    <dd className="tabular text-[13px] font-medium text-ink">{value}</dd>
+                    <dd className="tabular text-[13px] font-medium text-foreground">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -118,7 +120,7 @@ export default function WhyOrbit({ ticker }) {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="mt-5 w-full rounded-full bg-ink py-3 text-center text-[13px] font-semibold capitalize text-white transition-transform hover:scale-[1.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className={`mt-5 w-full rounded-full py-3 text-center text-[13px] font-semibold capitalize transition-colors hover:brightness-110 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none ${side === "buy" ? "bg-gain text-on-gain" : "bg-loss text-on-loss"}`}
               >
                 {side} {amount ? `${amount.toFixed(4)} BTC` : "BTC"}
               </button>

@@ -40,7 +40,7 @@ export default function Faq() {
 
   return (
     <section className="section">
-      <h2 className="text-center font-display text-[clamp(2.6rem,5vw,3.6rem)] font-normal tracking-[-0.01em] text-white">
+      <h2 className="text-center font-display text-[clamp(2.6rem,5vw,3.6rem)] font-normal tracking-[-0.01em] text-foreground">
         FAQ
       </h2>
 
@@ -59,7 +59,7 @@ export default function Faq() {
             >
               <div
                 className={`rounded-2xl px-4 transition-colors duration-500 sm:px-8 ${
-                  isOpen ? "bg-white/8" : "bg-transparent"
+                  isOpen ? "bg-panel-2" : "bg-transparent"
                 }`}
               >
                 <h3>
@@ -69,18 +69,18 @@ export default function Faq() {
                     aria-expanded={isOpen}
                     className="flex w-full items-center gap-3.5 py-5 text-left sm:gap-6 sm:py-6"
                   >
-                    <span className="size-2 shrink-0 rounded-full bg-white sm:size-2.5" aria-hidden="true" />
-                    <span className="tabular w-6 shrink-0 text-[13px] text-white/55 sm:w-8 sm:text-[15px]">
+                    <span className="size-2 shrink-0 rounded-full bg-foreground sm:size-2.5" aria-hidden="true" />
+                    <span className="tabular w-6 shrink-0 text-[13px] text-faint sm:w-8 sm:text-[15px]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="flex-1 text-[15px] text-white sm:text-base">{item.question}</span>
+                    <span className="flex-1 text-[15px] text-foreground sm:text-base">{item.question}</span>
 
                     {/* One icon rotated 45° rather than swapping glyphs, so the
                         plus turns into the minus in a single motion. */}
                     <motion.span
                       animate={{ rotate: isOpen ? 45 : 0 }}
                       transition={{ duration, ease: EASE }}
-                      className="shrink-0 text-white/70"
+                      className="shrink-0 text-muted-foreground"
                     >
                       <FiPlus className="size-5" aria-hidden="true" />
                     </motion.span>
@@ -105,7 +105,7 @@ export default function Faq() {
                         animate={{ y: 0 }}
                         exit={{ y: -6 }}
                         transition={{ duration, ease: EASE }}
-                        className="max-w-[92ch] pb-6 pl-9 pr-2 text-sm leading-[1.7] text-white/65 sm:pb-7 sm:pl-14 sm:pr-8 sm:text-[15px]"
+                        className="max-w-[92ch] pb-6 pl-9 pr-2 text-sm leading-[1.7] text-muted-foreground sm:pb-7 sm:pl-14 sm:pr-8 sm:text-[15px]"
                       >
                         {item.answer}
                       </motion.p>

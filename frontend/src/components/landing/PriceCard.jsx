@@ -25,15 +25,15 @@ export default function PriceCard({ symbol, name, ticker, status }) {
   const Arrow = isUp ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <div className="w-[248px] rounded-[26px] bg-ink p-5 text-white shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+    <div className="w-62 rounded-2xl border border-line bg-panel-2 p-5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
       <header className="flex items-center justify-between">
-        <span className="text-[13px] font-medium text-white/60">{name}</span>
-        <MoreHorizontal className="size-4 text-white/55" aria-hidden="true" />
+        <span className="text-[13px] font-medium text-muted-foreground">{name}</span>
+        <MoreHorizontal className="size-4 text-faint" aria-hidden="true" />
       </header>
 
       <p
         className={`tabular mt-4 font-display text-[27px] font-bold tracking-tight transition-colors duration-500 ${
-          flash === "up" ? "text-gain" : flash === "down" ? "text-loss" : "text-white"
+          flash === "up" ? "text-gain" : flash === "down" ? "text-loss" : "text-foreground"
         }`}
       >
         ${formatPrice(ticker?.price)}
@@ -52,19 +52,19 @@ export default function PriceCard({ symbol, name, ticker, status }) {
         {["Buy", "Sell", "Chart"].map((label) => (
           <span
             key={label}
-            className="flex-1 rounded-full bg-white/10 py-1.5 text-center text-[11px] font-medium text-white/80"
+            className="flex-1 rounded-full border border-line py-1.5 text-center text-[11px] font-medium text-muted-foreground"
           >
             {label}
           </span>
         ))}
       </div>
 
-      <footer className="mt-4 flex items-center gap-1.5 border-t border-white/10 pt-3">
+      <footer className="mt-4 flex items-center gap-1.5 border-t border-line pt-3">
         <span
-          className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-white/30"}`}
+          className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"}`}
           aria-hidden="true"
         />
-        <span className="text-[11px] text-white/70">
+        <span className="text-[11px] text-muted-foreground">
           {status === "live" ? `${symbol} · live` : "Reconnecting"}
         </span>
       </footer>

@@ -5,55 +5,59 @@ const STARTING_CASH = 100000;
 const DEMO_SPEND = 2500;
 
 /**
- * A non-interactive preview of Orbit's buy panel, priced off the live feed so
+ * A non-interactive preview of Orbit's buy ticket, priced off the live feed so
  * the quantity it shows is what this trade would actually fill at right now.
+ *
+ * Built from the same panel, well and hairline the signed-in ticket uses — the
+ * point of showing it here is that this is the real thing, so it should not be
+ * a prettier drawing of the real thing.
  */
 export default function TradeCard({ ticker }) {
   const price = ticker?.price;
   const quantity = price ? DEMO_SPEND / price : null;
 
   return (
-    <div className="w-[268px] rounded-[26px] bg-white p-5 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.35)]">
+    <div className="w-67 rounded-2xl border border-line bg-panel p-5 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.6)]">
       <header className="flex items-center justify-between">
-        <span className="font-display text-sm font-bold tracking-tight text-ink">Buy</span>
-        <span className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink/60">
+        <span className="font-display text-sm font-bold tracking-tight text-foreground">Buy</span>
+        <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
           Market
         </span>
       </header>
 
-      <div className="mt-4 rounded-2xl bg-mist p-3.5">
-        <span className="text-[11px] text-ink/60">Spend</span>
+      <div className="mt-4 rounded-xl border border-line bg-panel-2 p-3.5">
+        <span className="text-[11px] text-muted-foreground">Spend</span>
         <div className="mt-1 flex items-baseline justify-between">
-          <span className="tabular font-display text-lg font-bold text-ink">
+          <span className="tabular font-display text-lg font-bold text-foreground">
             {formatUsd(DEMO_SPEND)}
           </span>
-          <span className="text-[11px] font-medium text-ink/60">Cash</span>
+          <span className="text-[11px] font-medium text-faint">Cash</span>
         </div>
-        <span className="tabular mt-1 block text-[10px] text-ink/60">
+        <span className="tabular mt-1 block text-[10px] text-faint">
           Balance {formatUsd(STARTING_CASH)}
         </span>
       </div>
 
       <div className="relative flex justify-center">
-        <span className="absolute -top-2.5 grid size-6 place-items-center rounded-full bg-ink text-white ring-4 ring-white">
+        <span className="absolute -top-2.5 grid size-6 place-items-center rounded-full bg-brand text-ink ring-4 ring-panel">
           <ArrowDown className="size-3" aria-hidden="true" />
         </span>
       </div>
 
-      <div className="mt-2 rounded-2xl bg-mist p-3.5">
-        <span className="text-[11px] text-ink/60">Receive</span>
+      <div className="mt-2 rounded-xl border border-line bg-panel-2 p-3.5">
+        <span className="text-[11px] text-muted-foreground">Receive</span>
         <div className="mt-1 flex items-baseline justify-between">
-          <span className="tabular font-display text-lg font-bold text-ink">
+          <span className="tabular font-display text-lg font-bold text-foreground">
             {quantity ? quantity.toFixed(5) : "—"}
           </span>
-          <span className="text-[11px] font-medium text-ink/60">BTC</span>
+          <span className="text-[11px] font-medium text-faint">BTC</span>
         </div>
-        <span className="tabular mt-1 block text-[10px] text-ink/60">
+        <span className="tabular mt-1 block text-[10px] text-faint">
           1 BTC = ${formatPrice(price)}
         </span>
       </div>
 
-      <div className="mt-4 w-full rounded-full bg-ink py-2.5 text-center text-xs font-semibold text-white">
+      <div className="mt-4 w-full rounded-full bg-gain py-2.5 text-center text-xs font-semibold text-on-gain">
         Place order
       </div>
     </div>

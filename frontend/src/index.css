@@ -15,12 +15,11 @@
        as machine values rather than prose, and so they align in a column. */
     --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo, Consolas, monospace;
 
-    /* Orbit brand — the shell is monochrome; the gradient carries all the colour. */
+    /* Orbit brand. The shell is monochrome and gold is the only chrome
+       accent — a trading interface cannot afford a decorative hue that the
+       eye might read as a direction. */
     --color-ink: #0A0A0A;
     --color-mist: #F2F2F0;
-    --color-grad-rose: #F7C8DC;
-    --color-grad-peach: #FBD8B4;
-    --color-grad-lilac: #D9C9F2;
 
     /* Reserved for market data only — never for UI chrome.
        TradingView's default pairing: teal up, red down.
@@ -271,11 +270,22 @@
     color: var(--tint);
   }
 
-  .orbit-gradient {
+  /* The one atmospheric surface the landing page keeps: a gold bloom off the
+     top-left corner over a terminal panel. Warm, not colourful — it says
+     "brand" without introducing a second hue. */
+  .brand-wash {
     background:
-      radial-gradient(120% 90% at 12% 8%, var(--color-grad-rose) 0%, transparent 62%),
-      radial-gradient(110% 85% at 92% 22%, var(--color-grad-peach) 0%, transparent 58%),
-      linear-gradient(155deg, var(--color-grad-lilac) 0%, var(--color-grad-rose) 55%, var(--color-grad-peach) 100%);
+      radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--color-brand) 14%, transparent) 0%, transparent 62%),
+      var(--color-void);
+  }
+
+  /* Hairline grid, so an empty pane still reads as a terminal rather than a
+     void. Sized in ch so it scales with the type rather than the viewport. */
+  .grid-rule {
+    background-image:
+      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+    background-size: 4rem 4rem;
   }
 }
 
@@ -328,12 +338,40 @@
   }
 }
 
+/*
+ * The landing page is the terminal, not an advertisement for it.
+ *
+ * It re-declares the dark surface values locally rather than following the
+ * app's light/dark toggle: a marketing page has one identity, and someone who
+ * prefers light mode should still arrive at the product's own face. Because
+ * these are the same variable names the themes use, every ordinary utility —
+ * bg-panel, border-line, text-gain — works inside here and renders terminal.
+ */
+.page {
+  --surface-void: #0B0B0E;
+  --surface-panel: #141418;
+  --surface-panel-2: #1C1C21;
+  --surface-line: #27272E;
+
+  --background: #0B0B0E;
+  --foreground: #FBFBFB;
+  --muted-foreground: #A6A19A;
+  --text-faint: #8C877F;
+
+  --market-gain: #2DD4BF;
+  --market-loss: #EF5350;
+  --market-on-gain: #0A0A0A;
+  --market-on-loss: #0A0A0A;
+
+  color-scheme: dark;
+}
+
 /* Every section boundary gets the same hairline, applied by position rather
    than per-component — so a section can be reordered or removed without
    leaving a stray rule or a missing one. The first section has no rule above
    it because the navbar already closes the hero. */
 .page > section + section {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--color-line);
 }
 
 /* Both themes get a real colour scheme so form controls, scrollbars and
@@ -384,6 +422,35 @@
 
 @media (prefers-reduced-motion: reduce) {
   .orbit-rise {
+    animation: none;
+  }
+}
+
+/*
+ * The tape.
+ *
+ * Two identical runs of the same markets sit side by side and the pair is
+ * translated by exactly half its width, so the moment the first run leaves the
+ * frame the second is in its place — a seam-free loop from one animation and
+ * no JavaScript. Duration is long because a tape that hurries is unreadable.
+ */
+@keyframes orbit-tape {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+.tape-track {
+  animation: orbit-tape 80s linear infinite;
+  will-change: transform;
+}
+
+/* Hovering is how you read a value that just went past. */
+.tape:hover .tape-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tape-track {
     animation: none;
   }
 }
