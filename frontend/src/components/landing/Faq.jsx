@@ -39,7 +39,7 @@ export default function Faq() {
   const duration = reduceMotion ? 0 : 0.42;
 
   return (
-    <section className="section">
+    <section className="section" id="faq">
       <h2 className="text-center font-display text-[clamp(2.6rem,5vw,3.6rem)] font-normal tracking-[-0.01em] text-foreground">
         FAQ
       </h2>

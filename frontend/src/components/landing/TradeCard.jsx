@@ -17,7 +17,7 @@ export default function TradeCard({ ticker }) {
   const quantity = price ? DEMO_SPEND / price : null;
 
   return (
-    <div className="w-67 rounded-2xl border border-line bg-panel p-5 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.6)]">
+    <div className="w-64 rounded-2xl border border-line bg-panel-2 p-5">
       <header className="flex items-center justify-between">
         <span className="font-display text-sm font-bold tracking-tight text-foreground">Buy</span>
         <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
@@ -25,7 +25,7 @@ export default function TradeCard({ ticker }) {
         </span>
       </header>
 
-      <div className="mt-4 rounded-xl border border-line bg-panel-2 p-3.5">
+      <div className="mt-4 rounded-xl border border-line bg-void p-3.5">
         <span className="text-[11px] text-muted-foreground">Spend</span>
         <div className="mt-1 flex items-baseline justify-between">
           <span className="tabular font-display text-lg font-bold text-foreground">
@@ -39,12 +39,12 @@ export default function TradeCard({ ticker }) {
       </div>
 
       <div className="relative flex justify-center">
-        <span className="absolute -top-2.5 grid size-6 place-items-center rounded-full bg-brand text-ink ring-4 ring-panel">
+        <span className="absolute -top-2.5 grid size-6 place-items-center rounded-full bg-brand text-ink ring-4 ring-panel-2">
           <ArrowDown className="size-3" aria-hidden="true" />
         </span>
       </div>
 
-      <div className="mt-2 rounded-xl border border-line bg-panel-2 p-3.5">
+      <div className="mt-2 rounded-xl border border-line bg-void p-3.5">
         <span className="text-[11px] text-muted-foreground">Receive</span>
         <div className="mt-1 flex items-baseline justify-between">
           <span className="tabular font-display text-lg font-bold text-foreground">

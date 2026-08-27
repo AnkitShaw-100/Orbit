@@ -1,13 +1,15 @@
 import CtaBand from "@/components/landing/CtaBand";
 import Faq from "@/components/landing/Faq";
+import FeatureGrid from "@/components/landing/FeatureGrid";
 import Footer from "@/components/landing/Footer";
 import Hero from "@/components/landing/Hero";
 import HowItWorks from "@/components/landing/HowItWorks";
+import MarketPulse from "@/components/landing/MarketPulse";
+import MarketWall from "@/components/landing/MarketWall";
 import MarketsTable from "@/components/landing/MarketsTable";
 import Navbar from "@/components/landing/Navbar";
-import TickerTape from "@/components/landing/TickerTape";
 import SeamlessAccess from "@/components/landing/SeamlessAccess";
-import WhyOrbit from "@/components/landing/WhyOrbit";
+import TickerTape from "@/components/landing/TickerTape";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
 
 export default function Home() {
@@ -26,10 +28,12 @@ export default function Home() {
       <Navbar />
       <Hero tickers={tickers} status={status} />
       <TickerTape symbols={taped} tickers={tickers} />
+      <MarketPulse tickers={tickers} />
       <MarketsTable tickers={tickers} />
+      <FeatureGrid />
       <HowItWorks />
-      <WhyOrbit ticker={btc} />
       <SeamlessAccess ticker={btc} />
+      <MarketWall tickers={tickers} />
       <Faq />
       <CtaBand />
       <Footer />

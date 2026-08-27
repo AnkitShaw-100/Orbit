@@ -25,7 +25,7 @@ export default function PriceCard({ symbol, name, ticker, status }) {
   const Arrow = isUp ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <div className="w-62 rounded-2xl border border-line bg-panel-2 p-5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
+    <div className="w-64 rounded-2xl border border-line bg-panel-2 p-5">
       <header className="flex items-center justify-between">
         <span className="text-[13px] font-medium text-muted-foreground">{name}</span>
         <MoreHorizontal className="size-4 text-faint" aria-hidden="true" />

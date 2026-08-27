@@ -1,50 +1,74 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
+import CandleChart from "./CandleChart";
 import FactStrip from "./FactStrip";
-import PriceCard from "./PriceCard";
-import TradeCard from "./TradeCard";
+import { orbit } from "@/lib/api";
+import { formatPercent, formatPrice, formatVolume } from "@/lib/format";
 
 /**
  * The hero states the trade Orbit offers — a real market, unreal money — and
- * then proves it, by putting the actual buy ticket and the actual live price
- * on the page rather than a picture of them.
+ * then proves it underneath, with a live BTC chart flanked by the app's own
+ * buy ticket and price card.
  *
- * No illustration and no panel behind the cards: a paper-trading terminal has
- * nothing to show that is more convincing than its own working panels, and a
- * second surface behind them only competed with the ones that matter.
- *
- * Fills the viewport the navbar leaves, so the page opens on one whole idea
- * and the tape below is the reward for the first scroll.
+ * Centred rather than split: the claim is short enough to read in one line of
+ * sight, and centring lets the evidence below run the full width instead of
+ * being squeezed into a column beside the words.
  */
 export default function Hero({ tickers, status }) {
+  const [candles, setCandles] = useState([]);
+  const ticker = tickers.BTCUSDT;
+  const price = ticker?.price;
+  const up = (ticker?.changePct ?? 0) >= 0;
+
+  // One quiet request for the backdrop chart. It is illustration rather than a
+  // trading surface, so it does not poll — the live price keeps the newest
+  // candle honest on its own.
+  useEffect(() => {
+    let cancelled = false;
+    orbit
+      .klines("BTCUSDT", "1h", 120)
+      .then((result) => !cancelled && setCandles(result.candles))
+      .catch(() => !cancelled && setCandles([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = [
+    { label: "Last price", value: formatPrice(price) },
+    { label: "24h change", value: formatPercent(ticker?.changePct), tone: true },
+    { label: "24h volume", value: formatVolume(ticker?.quoteVolume) },
+  ];
+
   return (
     <section className="flex min-h-[calc(100svh-var(--nav-h))] flex-col">
-      <div className="gutter flex flex-1 items-center py-14 lg:py-16">
-        <div className="shell grid w-full items-center gap-12 lg:grid-cols-[1fr_minmax(0,25rem)] lg:gap-10">
-          <div>
+      <div className="gutter flex flex-1 flex-col justify-center py-14 lg:pt-16 lg:pb-20">
+        <div className="shell w-full">
+          <div className="mx-auto max-w-[46rem] text-center">
             <p className="orbit-rise font-mono text-[11px] tracking-[0.18em] text-brand uppercase">
               Paper trading · Live Binance prices
             </p>
 
             <h1
-              className="orbit-rise mt-6 max-w-[13ch] font-display text-[clamp(2.75rem,6.4vw,4.75rem)] leading-[0.95] font-bold tracking-[-0.04em] text-foreground"
+              className="orbit-rise mt-6 font-display text-[clamp(2.5rem,5.6vw,4.25rem)] leading-[0.98] font-bold tracking-[-0.04em] text-foreground"
               style={{ animationDelay: "60ms" }}
             >
-              Real prices.
+              Trade the real market
               <br />
-              Practice money.
+              with practice money
             </h1>
 
             <p
-              className="orbit-rise mt-7 max-w-[46ch] text-[15px] leading-relaxed text-muted-foreground"
+              className="orbit-rise mx-auto mt-6 max-w-[52ch] text-[15px] leading-relaxed text-muted-foreground"
               style={{ animationDelay: "140ms" }}
             >
-              Orbit hands you $100,000 in virtual cash and the live crypto market.
-              Learn what trading feels like before it can cost you anything.
+              Orbit hands you $100,000 in virtual cash and the live crypto market. Learn what
+              trading feels like before it can cost you anything.
             </p>
 
             <div
-              className="orbit-rise mt-9 flex flex-wrap items-center gap-3"
+              className="orbit-rise mt-9 flex flex-wrap items-center justify-center gap-3"
               style={{ animationDelay: "220ms" }}
             >
               <Link
@@ -67,31 +91,49 @@ export default function Hero({ tickers, status }) {
             </div>
           </div>
 
-          {/* Fixed-size stage so the two cards keep their overlap at every
-              width; only the scale changes on small screens. */}
-          <div className="flex justify-center lg:justify-end">
-            <div className="relative h-105 w-95 scale-[0.72] sm:scale-90 lg:scale-100">
-              <div className="orbit-rise absolute top-0 left-0" style={{ animationDelay: "300ms" }}>
-                <TradeCard ticker={tickers.BTCUSDT} />
-              </div>
-              <div
-                className="orbit-rise absolute top-38 left-28"
-                style={{ animationDelay: "400ms" }}
-              >
-                <PriceCard
-                  symbol="BTCUSDT"
-                  name="Bitcoin"
-                  ticker={tickers.BTCUSDT}
-                  status={status}
+          {/* The evidence: a live BTC chart on the same feed the signed-in
+              terminal trades against, running the full width of the shell. */}
+          <div
+            className="orbit-rise mt-14 rounded-2xl border border-line bg-panel"
+            style={{ animationDelay: "300ms" }}
+          >
+            <header className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-line px-5 py-4 sm:px-6">
+              <span className="rounded-full border border-line bg-panel-2 px-3 py-1.5 text-xs font-semibold text-foreground">
+                BTC/USDT
+              </span>
+
+              {stats.map(({ label, value, tone }) => (
+                <div key={label} className="leading-tight">
+                  <p className="font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
+                    {label}
+                  </p>
+                  <p
+                    className={`tabular text-sm font-medium ${
+                      tone ? (up ? "text-gain" : "text-loss") : "text-foreground"
+                    }`}
+                  >
+                    {value}
+                  </p>
+                </div>
+              ))}
+
+              <span className="ml-auto flex items-center gap-1.5 text-[11px] text-faint">
+                <span
+                  className={`size-1.5 rounded-full ${
+                    status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"
+                  }`}
                 />
-              </div>
+                {status === "live" ? "Live" : "Reconnecting"}
+              </span>
+            </header>
+
+            <div className="h-72 p-4 sm:h-96 sm:p-5">
+              <CandleChart data={candles} theme="dark" livePrice={price} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* The rule runs the full width; the cells inside it keep the page's
-          gutter, so the facts line up with the headline above them. */}
       <div className="gutter border-t border-line">
         <div className="shell">
           <FactStrip />

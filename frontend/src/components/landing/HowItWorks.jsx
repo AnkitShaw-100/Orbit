@@ -26,7 +26,7 @@ export default function HowItWorks() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <section className="section">
+    <section className="section" id="how-it-works">
       <div className="shell">
         <motion.h2
           initial={reduceMotion ? false : { opacity: 0, y: 22 }}
