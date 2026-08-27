@@ -77,7 +77,7 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-40 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-panel shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]">
+        <div className="pop absolute top-full left-0 z-40 mt-2 w-84 overflow-hidden rounded-xl border border-line bg-panel">
           <div className="relative border-b border-line">
             <Search
               className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint"
@@ -107,23 +107,27 @@ export default function MarketSelect({ symbols, value, prices, onChange }) {
                     role="option"
                     aria-selected={coin.symbol === value}
                     onClick={() => pick(coin.symbol)}
-                    className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-foreground/5 ${
-                      coin.symbol === value ? "bg-foreground/8" : ""
+                    className={`flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
+                      coin.symbol === value
+                        ? "bg-brand/10"
+                        : "hover:bg-foreground/[0.06]"
                     }`}
                   >
-                    <CoinIcon symbol={coin.symbol} className="size-7" />
+                    <CoinIcon symbol={coin.symbol} className="size-7 shrink-0" />
 
-                    <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block text-sm text-foreground">{coin.ticker}</span>
-                      <span className="block truncate text-[11px] text-faint">{coin.name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm leading-5 text-foreground">{coin.ticker}</span>
+                      <span className="block truncate text-[11px] leading-4 text-faint">
+                        {coin.name}
+                      </span>
                     </span>
 
-                    <span className="text-right leading-tight">
-                      <span className="tabular block text-xs text-foreground">
+                    <span className="shrink-0 text-right">
+                      <span className="tabular block text-xs leading-5 text-foreground">
                         {formatPrice(tick?.price)}
                       </span>
                       <span
-                        className={`tabular block text-[11px] ${isUp ? "text-gain" : "text-loss"}`}
+                        className={`tabular block text-[11px] leading-4 ${isUp ? "text-gain" : "text-loss"}`}
                       >
                         {formatPercent(tick?.changePct)}
                       </span>

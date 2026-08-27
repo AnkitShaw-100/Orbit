@@ -176,6 +176,12 @@
 
     /* The hairline scrollbar reads against whatever it sits on. */
     --scroll-thumb: rgba(0, 0, 0, 0.22);
+
+    /* Two casts: a soft wide one for depth and a tight one to seat the edge.
+       Warm-tinted rather than neutral black, to match the paper it falls on. */
+    --shadow-pop:
+      0 16px 40px -12px rgba(40, 32, 20, 0.16),
+      0 2px 6px -2px rgba(40, 32, 20, 0.07);
 }
 
 .dark {
@@ -229,6 +235,10 @@
     --accent-sky: #38BDF8;
 
     --scroll-thumb: rgba(255, 255, 255, 0.18);
+
+    /* On a near-black panel the shadow does less work than the hairline does,
+       so it only has to lift the surface, not outline it. */
+    --shadow-pop: 0 20px 44px -16px rgba(0, 0, 0, 0.65);
 }
 
 @layer base {
@@ -261,8 +271,13 @@
      the surface, the hairline and the icon chip means a new measure needs a
      colour, not a new class. */
   .tint {
-    background-color: color-mix(in oklab, var(--tint) 9%, var(--color-panel));
-    border-color: color-mix(in oklab, var(--tint) 20%, var(--color-line));
+    background-color: color-mix(in oklab, var(--tint) 9%, var(--surface-panel));
+    border-color: color-mix(in oklab, var(--tint) 20%, var(--surface-line));
+  }
+
+  /* Anything that floats over the page: menus, popovers, the market picker. */
+  .pop {
+    box-shadow: var(--shadow-pop);
   }
 
   .tint-chip {
@@ -276,17 +291,9 @@
   .brand-wash {
     background:
       radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--color-brand) 14%, transparent) 0%, transparent 62%),
-      var(--color-void);
+      var(--surface-void);
   }
 
-  /* Hairline grid, so an empty pane still reads as a terminal rather than a
-     void. Sized in ch so it scales with the type rather than the viewport. */
-  .grid-rule {
-    background-image:
-      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
-    background-size: 4rem 4rem;
-  }
 }
 
 /* The OS scrollbar is a heavy grey slab against these panels. This keeps the
@@ -320,19 +327,28 @@
 /* One rhythm for every section, so gutters and vertical spacing stop drifting
    between components. Sections that set these properties do not also carry
    Tailwind padding utilities, which would fight this. */
+.gutter,
 .section {
   padding-inline: 1.5rem;
+}
+
+.section {
   padding-block: 5rem;
 }
 
 @media (min-width: 640px) {
+  .gutter,
   .section {
     padding-inline: 2.5rem;
+  }
+
+  .section {
     padding-block: 7rem;
   }
 }
 
 @media (min-width: 1536px) {
+  .gutter,
   .section {
     padding-inline: 4rem;
   }
@@ -363,6 +379,9 @@
   --market-on-gain: #0A0A0A;
   --market-on-loss: #0A0A0A;
 
+  /* Shared so the hero can fill exactly the viewport the navbar leaves. */
+  --nav-h: 4.5rem;
+
   color-scheme: dark;
 }
 
@@ -371,7 +390,7 @@
    leaving a stray rule or a missing one. The first section has no rule above
    it because the navbar already closes the hero. */
 .page > section + section {
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--surface-line);
 }
 
 /* Both themes get a real colour scheme so form controls, scrollbars and

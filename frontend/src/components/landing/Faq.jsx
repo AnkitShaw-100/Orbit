@@ -33,7 +33,7 @@ const QUESTIONS = [
 const EASE = [0.22, 1, 0.36, 1];
 
 export default function Faq() {
-  const [open, setOpen] = useState(2);
+  const [open, setOpen] = useState(null);
   const reduceMotion = useReducedMotion();
 
   const duration = reduceMotion ? 0 : 0.42;

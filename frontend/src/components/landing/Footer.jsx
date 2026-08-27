@@ -2,8 +2,8 @@ import { Link } from "react-router";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line px-6 py-10 sm:px-10 2xl:px-16">
-      <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+    <footer className="gutter border-t border-line py-10">
+      <div className="shell flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="grid size-6 place-items-center rounded-full border border-line">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ArrowUpRight } from "lucide-react";
 import CoinIcon from "@/components/landing/CoinIcon";
@@ -12,6 +12,7 @@ import { useMarkets, useMe, useOrders, usePlaceOrder, usePortfolio } from "@/hoo
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
 import { formatPercent, formatPrice, formatUsd, signedPercent, signedUsd } from "@/lib/format";
 import { coinMeta } from "@/lib/markets";
+import { markPortfolio } from "@/lib/positions";
 
 /** Written once so the holdings header and its rows cannot drift apart. */
 const HOLDING_GRID = "lg:grid-cols-[1.6fr_1fr_9rem_13rem]";
@@ -157,13 +158,20 @@ function HoldingsHeader() {
 }
 
 export default function Dashboard() {
-  const portfolio = usePortfolio();
+  const query = usePortfolio();
   const orders = useOrders(5);
   const markets = useMarkets();
   const me = useMe();
   const placeOrder = usePlaceOrder();
   const navigate = useNavigate();
   const { data: prices, status } = useOrbitPrices();
+
+  // Same live re-mark the trade screen uses, so the holdings column and the
+  // summary band move with the feed instead of with the twenty-second poll.
+  const portfolio = useMemo(
+    () => ({ ...query, data: markPortfolio(query.data, prices) }),
+    [query, prices],
+  );
 
   // Which position is one click from being wiped. One at a time, so a mis-aimed
   // confirm cannot land on a row you never armed.

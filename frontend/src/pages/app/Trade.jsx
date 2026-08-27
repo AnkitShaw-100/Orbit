@@ -13,6 +13,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { orbit } from "@/lib/api";
 import { formatPrice, formatUsd, formatVolume, signedPercent, signedUsd } from "@/lib/format";
 import { baseAsset, coinMeta } from "@/lib/markets";
+import { markPortfolio } from "@/lib/positions";
 
 // Labelled by candle interval, the way every trading terminal does it — "1H"
 // meaning a one-hour candle, not a one-hour window. Each loads 300 bars, so
@@ -41,8 +42,19 @@ export default function Trade() {
   const markets = useMarkets();
   const listed = markets.data?.markets ?? [];
   const { data: prices, status } = useOrbitPrices();
-  const portfolio = usePortfolio();
+
+  const query = usePortfolio();
   const placeOrder = usePlaceOrder();
+
+  /**
+   * The portfolio query polls slowly, so between refetches its P&L was frozen
+   * beside a chart ticking in real time. Re-marked against the live feed here,
+   * once per tick, so every figure on the page moves together.
+   */
+  const portfolio = useMemo(
+    () => ({ ...query, data: markPortfolio(query.data, prices) }),
+    [query, prices],
+  );
   // The chart paints its own grid and labels, so it needs the resolved theme
   // rather than the preference — "system" is not a palette.
   const { resolved } = useTheme();
@@ -292,7 +304,11 @@ export default function Trade() {
         {/* The market band, built like the dashboard's summary: the picker and
             the price you are about to trade at up top, the surrounding facts
             in a banded row underneath. */}
-        <section className="overflow-hidden rounded-2xl border border-line bg-panel">
+        {/* Deliberately not overflow-hidden: the market picker opens a menu
+            out of this band, and clipping the corners would clip that too.
+            Nothing inside paints a background, so the rounded corners hold
+            without it. */}
+        <section className="rounded-2xl border border-line bg-panel">
           <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 p-5 sm:p-6">
             <div className="min-w-0">
               <MarketSelect
