@@ -247,15 +247,6 @@
     color: var(--tint);
   }
 
-  /* The identity band is the only surface in the app the accent floods. It is
-     the one page about the person rather than the market, and the wash is what
-     says so — every other panel stays neutral. */
-  .accent-wash {
-    background:
-      radial-gradient(130% 150% at 0% 0%, color-mix(in oklab, var(--color-brand) 18%, transparent) 0%, transparent 64%),
-      var(--color-panel);
-  }
-
   .orbit-gradient {
     background:
       radial-gradient(120% 90% at 12% 8%, var(--color-grad-rose) 0%, transparent 62%),

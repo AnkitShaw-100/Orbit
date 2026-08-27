@@ -66,7 +66,14 @@ export function StatCard({ label, value, hint, tone = "neutral", accent, icon: I
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs text-muted-foreground">{label}</p>
         {Icon && (
-          <span className="tint-chip grid size-10 shrink-0 place-items-center rounded-xl">
+          <span
+            // Without an accent there is no --tint to mix against, so the chip
+            // has to carry its own neutral rather than inheriting a broken
+            // colour from an unset variable.
+            className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+              tint ? "tint-chip" : "bg-foreground/8 text-muted-foreground"
+            }`}
+          >
             <Icon className="size-5" aria-hidden="true" />
           </span>
         )}

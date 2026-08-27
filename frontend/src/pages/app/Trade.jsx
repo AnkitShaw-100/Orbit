@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import CandleChart from "@/components/landing/CandleChart";
+import CoinCell, { SideBadge } from "@/components/app/CoinCell";
+import PositionActions from "@/components/app/PositionActions";
 import MarketSelect from "@/components/app/MarketSelect";
-import { Panel } from "@/components/app/Panel";
+import { Cell, CellRow, Panel } from "@/components/app/Panel";
+import { LiveDot } from "@/components/app/Toolbar";
 import { Loading } from "@/components/app/QueryState";
 import { useMarkets, usePlaceOrder, usePortfolio } from "@/hooks/useOrbit";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
 import { orbit } from "@/lib/api";
-import { formatPercent, formatPrice, formatUsd, formatVolume } from "@/lib/format";
+import { formatPrice, formatUsd, formatVolume, signedPercent, signedUsd } from "@/lib/format";
 import { baseAsset, coinMeta } from "@/lib/markets";
 
 // Labelled by candle interval, the way every trading terminal does it — "1H"
@@ -23,6 +26,11 @@ const RANGES = [
 ];
 
 const tickerOf = baseAsset;
+
+const QUANTITY = new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 });
+
+/** Written once so the positions header and its rows cannot drift apart. */
+const POSITION_GRID = "lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_13rem]";
 
 export default function Trade() {
   const [params, setParams] = useSearchParams();
@@ -178,195 +186,259 @@ export default function Trade() {
     );
   };
 
+  // The position's worth at this instant, from the live tick rather than the
+  // portfolio's last refetch — the same number the chart's entry line carries.
+  const entryPrice = heldQuantity ? Number(held.averagePrice) : null;
+  const livePnl =
+    entryPrice != null && price != null ? (price - entryPrice) * heldQuantity : null;
+  const livePnlPct =
+    livePnl != null ? (livePnl / (entryPrice * Math.abs(heldQuantity))) * 100 : null;
+
+  /**
+   * Under the chart, the way every trading terminal stacks it: the market on
+   * top, what you hold in it underneath, the ticket alongside. Above the chart
+   * it pushed the candles out of the viewport, which is the one thing this
+   * page cannot afford to do.
+   */
+  const positionsPanel = (
+    <Panel title="Open positions" bodyClassName="p-0">
+      {portfolio.isPending ? (
+        <Loading label="Loading positions" />
+      ) : portfolio.data?.holdings.length ? (
+        <>
+          <div
+            className={`hidden gap-4 border-b border-line px-5 py-3 text-xs text-faint sm:px-6 lg:grid ${POSITION_GRID}`}
+          >
+            <span>Market</span>
+            <span className="text-right">Quantity</span>
+            <span className="text-right">Avg price</span>
+            <span className="text-right">Market price</span>
+            <span className="text-right">P&L</span>
+            <span />
+          </div>
+
+          <ul>
+            {portfolio.data.holdings.map((holding) => {
+              const pnl = Number(holding.unrealizedPnl);
+              const quantity = Number(holding.quantity);
+              const closing = closeArmed === holding.symbol;
+
+              return (
+                <li
+                  key={holding.symbol}
+                  className={`grid grid-cols-[1fr_auto] items-center gap-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-foreground/2 sm:gap-4 sm:px-6 ${POSITION_GRID}`}
+                >
+                  <CoinCell
+                    symbol={holding.symbol}
+                    badge={holding.side === "SHORT" && <SideBadge side="SHORT" />}
+                    sub={
+                      <span className="tabular lg:hidden">
+                        {quantity} @ {formatPrice(Number(holding.averagePrice))}
+                      </span>
+                    }
+                  />
+
+                  <span className="tabular hidden text-right text-sm text-muted-foreground lg:block">
+                    {quantity}
+                  </span>
+                  <span className="tabular hidden text-right text-sm text-muted-foreground lg:block">
+                    {formatPrice(Number(holding.averagePrice))}
+                  </span>
+                  <span className="tabular hidden text-right text-sm text-foreground lg:block">
+                    {formatPrice(Number(holding.marketPrice))}
+                  </span>
+                  <span
+                    className={`tabular text-right text-sm font-medium ${pnl >= 0 ? "text-gain" : "text-loss"}`}
+                  >
+                    {signedUsd(pnl)}
+                  </span>
+
+                  <div className="col-span-2 lg:col-span-1">
+                    <PositionActions
+                      armed={closing}
+                      pending={placeOrder.isPending}
+                      onAdd={() => addTo(holding.symbol, quantity)}
+                      onArm={() => setCloseArmed(holding.symbol)}
+                      onCancel={() => setCloseArmed(null)}
+                      onConfirm={() => closePosition(holding.symbol, quantity)}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      ) : (
+        // A single line rather than a centred block: this is the last thing on
+        // the page, and an empty panel saying nothing does not deserve the
+        // height of one that lists positions.
+        <p className="px-5 py-4 text-sm text-muted-foreground sm:px-6">
+          No open positions yet.{" "}
+          <span className="text-faint">
+            Anything you buy or short appears here, with its live P&L and a one-click exit.
+          </span>
+        </p>
+      )}
+    </Panel>
+  );
+
   return (
     <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[1fr_300px]">
       <div className="min-w-0 space-y-4">
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl border border-line bg-panel px-5 py-4">
-          <MarketSelect
-            symbols={listed.map((option) => option.symbol)}
-            value={coin.symbol}
-            prices={prices}
-            onChange={(next) => setParams({ symbol: next })}
-          />
+        {/* The market band, built like the dashboard's summary: the picker and
+            the price you are about to trade at up top, the surrounding facts
+            in a banded row underneath. */}
+        <section className="overflow-hidden rounded-2xl border border-line bg-panel">
+          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 p-5 sm:p-6">
+            <div className="min-w-0">
+              <MarketSelect
+                symbols={listed.map((option) => option.symbol)}
+                value={coin.symbol}
+                prices={prices}
+                onChange={(next) => setParams({ symbol: next })}
+              />
+              <p className="mt-3 font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
+                Last price
+              </p>
+              <p
+                className={`tabular font-display text-3xl font-bold tracking-[-0.03em] ${
+                  isUp ? "text-gain" : "text-loss"
+                }`}
+              >
+                {formatPrice(price)}
+              </p>
+            </div>
 
-          <div>
-            <p className="text-[11px] text-faint">Last price</p>
-            <p className={`tabular text-sm font-medium ${isUp ? "text-gain" : "text-loss"}`}>
-              {formatPrice(price)}
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] text-faint">24h change</p>
-            <p className={`tabular text-sm font-medium ${isUp ? "text-gain" : "text-loss"}`}>
-              {formatPercent(ticker?.changePct)}
-            </p>
-          </div>
-          <div className="hidden sm:block">
-            <p className="text-[11px] text-faint">24h volume</p>
-            <p className="tabular text-sm font-medium text-foreground">
-              {formatVolume(ticker?.quoteVolume)}
-            </p>
-          </div>
-
-          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-faint">
-            <span className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"}`} />
-            {status === "live" ? "Live" : "Reconnecting"}
-          </span>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-panel">
-          <header className="flex items-center justify-between border-b border-line px-5 py-3">
-            <h2 className="text-sm font-semibold text-foreground">Chart</h2>
-            <div className="flex gap-1">
-              {RANGES.map((option) => (
-                <button
-                  key={option.label}
-                  type="button"
-                  onClick={() => setRange(option.label)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                    range === option.label ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+            <div className="flex items-end gap-8">
+              <div className="text-right leading-tight">
+                <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
+                  24h change
+                </p>
+                <p
+                  className={`tabular font-display text-xl font-bold tracking-[-0.03em] ${
+                    isUp ? "text-gain" : "text-loss"
                   }`}
                 >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </header>
-          <div className="h-95 p-3 lg:h-110">
-            {candles.length ? (
-              <CandleChart data={candles} theme="dark" livePrice={price} />
-            ) : candlesFailed ? (
-              <div className="grid h-full place-content-center text-center">
-                <p className="text-sm text-foreground">Couldn't load candles for {coin.ticker}</p>
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Check the Orbit API is running, then switch timeframe to retry.
+                  {signedPercent(ticker?.changePct)}
                 </p>
               </div>
-            ) : (
-              <Loading label="Loading candles" />
-            )}
+
+              <LiveDot status={status} />
+            </div>
           </div>
-        </div>
 
-        <Panel title="Open positions" bodyClassName="p-0">
-          {portfolio.isPending ? (
-            <Loading label="Loading positions" />
-          ) : portfolio.data?.holdings.length ? (
-            <>
-              <div className="hidden grid-cols-[4rem_1fr_1fr_1fr_1fr_11rem] gap-4 border-b border-line px-5 py-2.5 text-[11px] text-faint sm:grid">
-                <span>Asset</span>
-                <span className="text-right">Quantity</span>
-                <span className="text-right">Avg price</span>
-                <span className="text-right">Market</span>
-                <span className="text-right">P&L</span>
-                <span />
+          <div className="border-t border-line">
+            <CellRow>
+              <Cell label="24h volume" value={formatVolume(ticker?.quoteVolume)}>
+                <p className="text-xs text-faint">Traded on Binance</p>
+              </Cell>
+              <Cell
+                label="Your position"
+                value={heldQuantity ? QUANTITY.format(Math.abs(heldQuantity)) : "None"}
+              >
+                <p className="text-xs text-faint">
+                  {heldQuantity
+                    ? `${heldQuantity < 0 ? "Short" : "Long"} ${coin.ticker} · ${signedUsd(
+                        Number(held?.unrealizedPnl ?? 0),
+                      )}`
+                    : `No ${coin.ticker} held`}
+                </p>
+              </Cell>
+              <Cell label="Available cash" value={formatUsd(cash)}>
+                <p className="text-xs text-faint">Short room {formatUsd(shortCapacity)}</p>
+              </Cell>
+            </CellRow>
+          </div>
+        </section>
+
+        <Panel
+          title="Chart"
+          bodyClassName="h-95 p-3 lg:h-110"
+          action={
+            <div className="flex items-center gap-4">
+              {/* The position, restated where the eye already is: the chart
+                  draws the entry line, this says what it is worth. */}
+              {livePnl != null && (
+                <span className="tabular hidden items-center gap-2 text-xs sm:flex">
+                  <span className="text-faint">
+                    {heldQuantity < 0 ? "Short" : "Long"} {formatPrice(entryPrice)}
+                  </span>
+                  <span className={livePnl >= 0 ? "text-gain" : "text-loss"}>
+                    {signedUsd(livePnl)} ({signedPercent(livePnlPct)})
+                  </span>
+                </span>
+              )}
+
+              <div role="radiogroup" aria-label="Candle interval" className="flex gap-1">
+                {RANGES.map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    role="radio"
+                    aria-checked={range === option.label}
+                    onClick={() => setRange(option.label)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
+                      range === option.label
+                        ? "bg-brand text-ink"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-
-              <ul>
-                {portfolio.data.holdings.map((holding) => {
-                  const pnl = Number(holding.unrealizedPnl);
-                  const quantity = Number(holding.quantity);
-                  const closing = closeArmed === holding.symbol;
-
-                  return (
-                    <li
-                      key={holding.symbol}
-                      className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-line px-5 py-3.5 last:border-b-0 sm:grid-cols-[4rem_1fr_1fr_1fr_1fr_11rem] sm:gap-4"
-                    >
-                      <span className="flex items-center gap-2 text-sm text-foreground">
-                        {tickerOf(holding.symbol)}
-                        {holding.side === "SHORT" && (
-                          <span className="rounded bg-loss/20 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-loss">
-                            SHORT
-                          </span>
-                        )}
-                      </span>
-
-                      <span className="tabular hidden text-right text-xs text-muted-foreground sm:block">
-                        {quantity}
-                      </span>
-                      <span className="tabular hidden text-right text-xs text-muted-foreground sm:block">
-                        {formatPrice(Number(holding.averagePrice))}
-                      </span>
-                      <span className="tabular hidden text-right text-xs text-foreground sm:block">
-                        {formatPrice(Number(holding.marketPrice))}
-                      </span>
-                      <span
-                        className={`tabular text-right text-xs font-medium ${pnl >= 0 ? "text-gain" : "text-loss"}`}
-                      >
-                        {pnl >= 0 ? "+" : "−"}
-                        {formatUsd(Math.abs(pnl)).slice(1)}
-                      </span>
-
-                      <div className="col-span-2 flex justify-end gap-1.5 sm:col-span-1">
-                        <button
-                          type="button"
-                          onClick={() => addTo(holding.symbol, quantity)}
-                          className="rounded-md border border-line px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-gain/60 hover:text-gain"
-                        >
-                          Add
-                        </button>
-
-                        {/* Closing wipes a position, so it asks once — the same
-                            two-step the settings danger zone uses. */}
-                        {closing ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => closePosition(holding.symbol, quantity)}
-                              disabled={placeOrder.isPending}
-                              className="rounded-md bg-loss px-2.5 py-1 text-[11px] font-semibold text-foreground disabled:opacity-60"
-                            >
-                              {placeOrder.isPending ? "Closing…" : "Confirm"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setCloseArmed(null)}
-                              className="rounded-md border border-line px-2.5 py-1 text-[11px] text-muted-foreground"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setCloseArmed(holding.symbol)}
-                            className="rounded-md border border-line px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-loss/60 hover:text-loss"
-                          >
-                            Close
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
+            </div>
+          }
+        >
+          {candles.length ? (
+            <CandleChart
+              data={candles}
+              theme="dark"
+              livePrice={price}
+              position={
+                heldQuantity
+                  ? { entry: Number(held.averagePrice), quantity: heldQuantity }
+                  : null
+              }
+            />
+          ) : candlesFailed ? (
+            <div className="grid h-full place-content-center px-5 text-center">
+              <p className="text-sm text-foreground">Couldn't load candles for {coin.ticker}</p>
+              <p className="mx-auto mt-1.5 max-w-[46ch] text-xs leading-relaxed text-muted-foreground">
+                Check the Orbit API is running, then switch timeframe to retry.
+              </p>
+            </div>
           ) : (
-            <p className="px-5 py-10 text-center text-sm text-muted-foreground">
-              No open positions yet.
-            </p>
+            <Loading label="Loading candles" />
           )}
         </Panel>
+
+        {positionsPanel}
       </div>
 
       <div className="space-y-4">
         <Panel title="Place order">
-          <div className="grid grid-cols-2 gap-2">
+          <div
+            role="radiogroup"
+            aria-label="Order side"
+            className="grid grid-cols-2 gap-1 rounded-full border border-line p-1"
+          >
             {["BUY", "SELL"].map((option) => (
               <button
                 key={option}
                 type="button"
+                role="radio"
+                aria-checked={side === option}
                 onClick={() => {
                   setSide(option);
                   setReceipt(null);
                 }}
-                className={`rounded-lg py-2.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full py-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none ${
                   side === option
                     ? option === "BUY"
                       ? "bg-gain text-ink"
                       : "bg-loss text-foreground"
-                    : "border border-line text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {option === "BUY" ? "Buy" : "Sell"}
@@ -374,22 +446,31 @@ export default function Trade() {
             ))}
           </div>
 
-          <p className="mt-4 rounded-lg bg-panel-2 px-3 py-2 text-[11px] text-muted-foreground">
-            Market order — fills immediately at {formatPrice(price)}.
-          </p>
-
-          <p className="mt-2 text-[11px] text-muted-foreground">{intent}</p>
+          {/* What the order is and what it will do to the position, together —
+              they are one thought, and two separate paragraphs read as two. */}
+          <div className="mt-4 rounded-xl border border-line bg-panel-2 px-3.5 py-3 text-[11px] leading-relaxed">
+            <p className="text-muted-foreground">
+              Market order — fills immediately at{" "}
+              <span className="tabular text-foreground">{formatPrice(price)}</span>.
+            </p>
+            <p className="mt-1 text-foreground">{intent}</p>
+          </div>
 
           <label className="mt-4 block">
-            <span className="text-[11px] text-muted-foreground">
+            <span className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
               {side === "BUY" ? "Spend (USDT)" : "Sell value (USDT)"}
             </span>
-            <input
-              value={amount}
-              onChange={(event) => setAmount(event.target.value.replace(/[^0-9.]/g, ""))}
-              inputMode="decimal"
-              className="tabular mt-1.5 w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-sm text-foreground focus:border-foreground/30 focus:outline-none"
-            />
+            <div className="relative mt-2">
+              <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm text-faint">
+                $
+              </span>
+              <input
+                value={amount}
+                onChange={(event) => setAmount(event.target.value.replace(/[^0-9.]/g, ""))}
+                inputMode="decimal"
+                className="tabular w-full rounded-xl border border-line bg-panel-2 py-3 pr-3.5 pl-7 font-display text-lg font-bold tracking-[-0.02em] text-foreground transition-colors focus:border-brand/50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+              />
+            </div>
           </label>
 
           <div className="mt-2 grid grid-cols-4 gap-1.5">
@@ -408,21 +489,21 @@ export default function Trade() {
                     ),
                   )
                 }
-                className="rounded-md border border-line py-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-full border border-line py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-brand/50 hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
               >
                 {pct}%
               </button>
             ))}
           </div>
 
-          <dl className="mt-4 space-y-2 text-[11px]">
+          <dl className="mt-4 divide-y divide-line border-y border-line text-[11px]">
             {[
               ["Quantity", `${quantity ? quantity.toFixed(6) : "0.000000"} ${coin.ticker}`],
               ["Order value", formatUsd(spend)],
               ["Cash after", formatUsd(side === "BUY" ? cash - spend : cash + spend)],
               ["Short room", formatUsd(shortCapacity)],
             ].map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-3">
+              <div key={label} className="flex justify-between gap-3 py-2">
                 <dt className="text-muted-foreground">{label}</dt>
                 <dd className="tabular text-foreground">{value}</dd>
               </div>
@@ -432,7 +513,7 @@ export default function Trade() {
           {/* Margin health, shown only once something is actually shorted. */}
           {portfolio.data?.marginRatio && (
             <div
-              className={`mt-3 rounded-lg border px-3 py-2 text-[11px] ${
+              className={`mt-3 rounded-xl border px-3.5 py-2.5 text-[11px] ${
                 portfolio.data.atRisk
                   ? "border-loss/40 bg-loss/10 text-loss"
                   : "border-line bg-panel-2 text-muted-foreground"
@@ -450,21 +531,21 @@ export default function Trade() {
             </div>
           )}
 
-          {warning && <p className="mt-3 text-[11px] text-loss">{warning}</p>}
-          {placeOrder.isError && (
-            <p className="mt-3 text-[11px] text-loss">{placeOrder.error.message}</p>
+          {(warning || placeOrder.isError) && (
+            <p className="mt-3 rounded-xl border border-loss/30 bg-loss/10 px-3.5 py-2.5 text-[11px] leading-relaxed text-loss">
+              {warning ?? placeOrder.error.message}
+            </p>
           )}
 
           {receipt && (
-            <div className="mt-3 rounded-lg border border-gain/30 bg-gain/10 px-3 py-2.5 text-[11px] text-gain">
+            <div className="mt-3 rounded-xl border border-gain/30 bg-gain/10 px-3.5 py-2.5 text-[11px] text-gain">
               <p className="font-medium">
                 {receipt.side === "BUY" ? "Bought" : "Sold"} {receipt.quantity}{" "}
                 {tickerOf(receipt.symbol)} at {formatPrice(receipt.price)}
               </p>
               {receipt.realizedPnl != null && (
                 <p className="tabular mt-0.5 text-muted-foreground">
-                  Realised {receipt.realizedPnl >= 0 ? "+" : "−"}
-                  {formatUsd(Math.abs(receipt.realizedPnl)).slice(1)}
+                  Realised {signedUsd(receipt.realizedPnl)}
                 </p>
               )}
             </div>
@@ -474,7 +555,7 @@ export default function Trade() {
             type="button"
             onClick={submit}
             disabled={blocked}
-            className={`mt-4 w-full rounded-lg py-3 text-sm font-semibold transition-colors ${
+            className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none ${
               blocked
                 ? "cursor-not-allowed bg-foreground/10 text-faint"
                 : side === "BUY"

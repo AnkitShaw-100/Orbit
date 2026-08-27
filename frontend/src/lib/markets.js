@@ -12,8 +12,14 @@ const META = new Map(
   manifest.map((entry) => [entry.symbol.toUpperCase(), { name: entry.name, color: entry.color }]),
 );
 
-/** "BTCUSDT" -> "BTC". Every Orbit pair is quoted in USDT. */
+/**
+ * "BTCUSDT" -> "BTC". Every Orbit pair is quoted in USDT.
+ *
+ * Guarded against a missing symbol: these run inside render, and a live tick
+ * that arrives without one should cost a dash in a cell, not the whole screen.
+ */
 export function baseAsset(symbol) {
+  if (typeof symbol !== "string") return "";
   return symbol.endsWith("USDT") ? symbol.slice(0, -4) : symbol;
 }
 

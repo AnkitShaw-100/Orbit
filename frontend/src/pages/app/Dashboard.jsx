@@ -1,15 +1,20 @@
-import { Link } from "react-router";
-import { ArrowUpRight, Layers, PieChart, Scale, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { ArrowUpRight } from "lucide-react";
 import CoinIcon from "@/components/landing/CoinIcon";
+import CoinCell, { SideBadge } from "@/components/app/CoinCell";
 import Sparkline from "@/components/landing/Sparkline";
-import { Cell, CellRow, Panel, StatCard } from "@/components/app/Panel";
+import { Cell, CellRow, Panel } from "@/components/app/Panel";
+import PositionActions from "@/components/app/PositionActions";
+import { LiveDot } from "@/components/app/Toolbar";
 import { Failed, Loading } from "@/components/app/QueryState";
-import { useMarkets, useMe, useOrders, usePortfolio } from "@/hooks/useOrbit";
+import { useMarkets, useMe, useOrders, usePlaceOrder, usePortfolio } from "@/hooks/useOrbit";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
-import { formatPercent, formatPrice, formatUsd } from "@/lib/format";
-import { baseAsset, coinMeta } from "@/lib/markets";
+import { formatPercent, formatPrice, formatUsd, signedPercent, signedUsd } from "@/lib/format";
+import { coinMeta } from "@/lib/markets";
 
-const tickerOf = baseAsset;
+/** Written once so the holdings header and its rows cannot drift apart. */
+const HOLDING_GRID = "lg:grid-cols-[1.6fr_1fr_9rem_13rem]";
 
 const QUANTITY = new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 });
 
@@ -23,16 +28,6 @@ const ROW_TIME = new Intl.DateTimeFormat("en-GB", {
 // Read once at load rather than per render: a day counter has no business
 // changing mid-session, and reading the clock during render isn't pure.
 const LOADED_AT = Date.now();
-
-/** A figure with its sign, always as money. */
-function signedUsd(value) {
-  return `${value >= 0 ? "+" : "−"}${formatUsd(Math.abs(value))}`;
-}
-
-/** A percentage with its sign, using the same minus glyph as the money. */
-function signedPct(value) {
-  return `${value >= 0 ? "+" : "−"}${Math.abs(value).toFixed(2)}%`;
-}
 
 /**
  * The headline band: what the account is worth, and how that compares to the
@@ -68,7 +63,7 @@ function SummaryBand({ name, days, totalValue, startingCash, cash, unrealised, t
               ahead ? "text-gain" : "text-loss"
             }`}
           >
-            {signedPct(totalReturn)}
+            {signedPercent(totalReturn)}
           </p>
           <p className={`tabular text-sm ${ahead ? "text-gain" : "text-loss"}`}>
             {signedUsd(totalValue - startingCash)}
@@ -100,28 +95,26 @@ function SummaryBand({ name, days, totalValue, startingCash, cash, unrealised, t
   );
 }
 
-/** One open position, laid out like the profile's ledger rows. */
-function HoldingRow({ holding }) {
-  const meta = coinMeta(holding.symbol);
+/**
+ * One open position, laid out like the profile's ledger rows — and, because a
+ * position you are looking at is usually a position you want to do something
+ * about, carrying the same Add and Close controls the trade page offers.
+ */
+function HoldingRow({ holding, armed, pending, onAdd, onArm, onCancel, onConfirm }) {
   const pnl = Number(holding.unrealizedPnl);
+  const quantity = Number(holding.quantity);
 
   return (
-    <li className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-line px-5 py-3.5 last:border-b-0 sm:px-6 lg:grid-cols-[1.6fr_1fr_9rem]">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
-          <CoinIcon symbol={meta.symbol} />
-        </span>
-        <div className="min-w-0 leading-tight">
-          <p className="text-sm text-foreground">
-            {meta.ticker}
-            <span className="text-faint">/USDT</span>
-          </p>
-          <p className="truncate text-xs text-faint">{meta.name}</p>
-        </div>
-      </div>
+    <li
+      className={`grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 border-b border-line px-5 py-3 transition-colors last:border-b-0 hover:bg-foreground/2 sm:px-6 ${HOLDING_GRID}`}
+    >
+      <CoinCell
+        symbol={holding.symbol}
+        badge={holding.side === "SHORT" && <SideBadge side="SHORT" />}
+      />
 
       <span className="tabular hidden text-sm text-muted-foreground lg:block">
-        {QUANTITY.format(Number(holding.quantity))}{" "}
+        {QUANTITY.format(quantity)}{" "}
         <span className="text-faint">@ {formatPrice(Number(holding.averagePrice))}</span>
       </span>
 
@@ -130,6 +123,17 @@ function HoldingRow({ holding }) {
         <p className={`tabular text-xs ${pnl >= 0 ? "text-gain" : "text-loss"}`}>
           {signedUsd(pnl)} ({formatPercent(Number(holding.unrealizedPnlPct))})
         </p>
+      </div>
+
+      <div className="col-span-2 lg:col-span-1">
+        <PositionActions
+          armed={armed}
+          pending={pending}
+          onAdd={onAdd}
+          onArm={onArm}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+        />
       </div>
     </li>
   );
@@ -141,10 +145,13 @@ function HoldingRow({ holding }) {
  */
 function HoldingsHeader() {
   return (
-    <div className="hidden grid-cols-[1.6fr_1fr_9rem] gap-4 border-b border-line px-5 py-3 text-xs text-faint sm:px-6 lg:grid">
+    <div
+      className={`hidden gap-4 border-b border-line px-5 py-3 text-xs text-faint sm:px-6 lg:grid ${HOLDING_GRID}`}
+    >
       <span>Market</span>
       <span>Position</span>
       <span className="text-right">Value</span>
+      <span />
     </div>
   );
 }
@@ -154,7 +161,13 @@ export default function Dashboard() {
   const orders = useOrders(5);
   const markets = useMarkets();
   const me = useMe();
+  const placeOrder = usePlaceOrder();
+  const navigate = useNavigate();
   const { data: prices, status } = useOrbitPrices();
+
+  // Which position is one click from being wiped. One at a time, so a mis-aimed
+  // confirm cannot land on a row you never armed.
+  const [closeArmed, setCloseArmed] = useState(null);
 
   // The busiest six markets, in the order the API ranked them by volume.
   const watchlist = (markets.data?.markets ?? []).slice(0, 6).map((row) => coinMeta(row.symbol));
@@ -169,21 +182,26 @@ export default function Dashboard() {
   const unrealised = Number(p.unrealizedPnl);
   const totalReturn = Number(p.totalReturnPct);
   const startingCash = Number(p.startingCash);
-  const positionsValue = Number(p.positionsValue);
-  const shortNotional = Number(p.shortNotional);
 
   const user = me.data?.user;
   const days = user
     ? Math.max(1, Math.round((LOADED_AT - new Date(user.createdAt)) / 86_400_000))
     : null;
 
-  // The position doing the most work, by percentage rather than size — a small
-  // holding up 40% is the more useful thing to surface than a large one up 2%.
-  const best = p.holdings.length
-    ? p.holdings.reduce((a, b) =>
-        Number(b.unrealizedPnlPct) > Number(a.unrealizedPnlPct) ? b : a,
-      )
-    : null;
+  /**
+   * Flatten a position at market. A long is closed by selling, a short by
+   * buying it back, so the side depends on which way the position runs.
+   */
+  const closePosition = (symbol, quantity) => {
+    placeOrder.mutate(
+      {
+        symbol,
+        side: quantity < 0 ? "BUY" : "SELL",
+        quantity: Number(Math.abs(quantity).toFixed(8)),
+      },
+      { onSuccess: () => setCloseArmed(null) },
+    );
+  };
 
   return (
     <div className="space-y-5 p-4 sm:p-6">
@@ -196,41 +214,6 @@ export default function Dashboard() {
         unrealised={unrealised}
         totalReturn={totalReturn}
       />
-
-      {/* Measures the band above doesn't already state, so the two rows add up
-          rather than repeat. Each keeps the hue the profile gave it. */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Open positions"
-          value={p.holdings.length || "—"}
-          hint={p.holdings.length === 1 ? "In 1 market" : `In ${p.holdings.length} markets`}
-          accent="iris"
-          icon={Layers}
-        />
-        <StatCard
-          label="Invested"
-          value={formatUsd(positionsValue)}
-          hint={`${totalValue ? Math.round((positionsValue / totalValue) * 100) : 0}% of portfolio`}
-          accent="sky"
-          icon={PieChart}
-        />
-        <StatCard
-          label="Best performer"
-          value={best ? formatPercent(Number(best.unrealizedPnlPct)) : "—"}
-          tone={best && Number(best.unrealizedPnlPct) >= 0 ? "gain" : best ? "loss" : "neutral"}
-          hint={best ? `${tickerOf(best.symbol)} · ${signedUsd(Number(best.unrealizedPnl))}` : "No open positions"}
-          accent="mint"
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Short exposure"
-          value={shortNotional ? formatUsd(shortNotional) : "None"}
-          tone={p.atRisk ? "loss" : "neutral"}
-          hint={p.marginRatio ? `Margin ${p.marginRatio}×` : "Nothing shorted"}
-          accent="ember"
-          icon={Scale}
-        />
-      </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <Panel title="Holdings" bodyClassName="p-0">
@@ -252,9 +235,27 @@ export default function Dashboard() {
               <HoldingsHeader />
               <ul>
                 {p.holdings.map((holding) => (
-                  <HoldingRow key={holding.symbol} holding={holding} />
+                  <HoldingRow
+                    key={holding.symbol}
+                    holding={holding}
+                    armed={closeArmed === holding.symbol}
+                    pending={placeOrder.isPending}
+                    // Adding needs a size and a price to check, which is the
+                    // trade ticket's job — so this hands off rather than
+                    // guessing an amount on the user's behalf.
+                    onAdd={() => navigate(`/trade?symbol=${holding.symbol}`)}
+                    onArm={() => setCloseArmed(holding.symbol)}
+                    onCancel={() => setCloseArmed(null)}
+                    onConfirm={() => closePosition(holding.symbol, Number(holding.quantity))}
+                  />
                 ))}
               </ul>
+
+              {placeOrder.isError && (
+                <p className="border-t border-line px-5 py-3 text-xs text-loss sm:px-6">
+                  {placeOrder.error.message}
+                </p>
+              )}
             </>
           )}
         </Panel>
@@ -262,12 +263,7 @@ export default function Dashboard() {
         <Panel
           title="Watchlist"
           action={
-            <span className="flex items-center gap-1.5 text-[11px] text-faint">
-              <span
-                className={`size-1.5 rounded-full ${status === "live" ? "animate-pulse bg-gain" : "bg-foreground/30"}`}
-              />
-              {status === "live" ? "Live" : "Offline"}
-            </span>
+            <LiveDot status={status} labels={["Live", "Offline"]} />
           }
           bodyClassName="p-0"
         >
@@ -321,34 +317,14 @@ export default function Dashboard() {
         ) : orders.data?.orders.length ? (
           <ul>
             {orders.data.orders.map((order) => {
-              const meta = coinMeta(order.symbol);
-
               return (
                 <li
                   key={order.id}
                   className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-line px-5 py-3.5 last:border-b-0 sm:px-6 lg:grid-cols-[1.6fr_1fr_1fr_8rem]"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-foreground">
-                      <CoinIcon symbol={meta.symbol} />
-                    </span>
-                    <div className="min-w-0 leading-tight">
-                      <p className="text-sm text-foreground">
-                        {meta.ticker}
-                        <span className="text-faint">/USDT</span>
-                      </p>
-                      <p className="truncate text-xs text-faint">{meta.name}</p>
-                    </div>
-                  </div>
+                  <CoinCell symbol={order.symbol} badge={<SideBadge side={order.side} />} />
 
                   <span className="tabular hidden text-sm text-muted-foreground lg:block">
-                    <span
-                      className={`mr-2 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-                        order.side === "BUY" ? "bg-gain/15 text-gain" : "bg-loss/15 text-loss"
-                      }`}
-                    >
-                      {order.side}
-                    </span>
                     {QUANTITY.format(Number(order.quantity))}
                   </span>
 

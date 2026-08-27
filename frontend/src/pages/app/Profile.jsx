@@ -5,6 +5,8 @@ import { useState } from "react";
 import { TbChartBar, TbReceipt2, TbScale, TbTargetArrow } from "react-icons/tb";
 import CoinIcon from "@/components/landing/CoinIcon";
 import { Cell, CellRow, Panel, StatCard } from "@/components/app/Panel";
+import Pagination from "@/components/app/Pagination";
+import { pageOf } from "@/lib/paging";
 import {
   Dialog,
   DialogContent,
@@ -14,17 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { Failed, Loading } from "@/components/app/QueryState";
 import { useMe, useOrders, useTransactions } from "@/hooks/useOrbit";
-import { formatUsd } from "@/lib/format";
+import { formatUsd, signedUsd } from "@/lib/format";
 import { baseAsset, coinMeta } from "@/lib/markets";
 
 /** Closed trades shown on the card before the full ledger has to be opened. */
 const PREVIEW_ROWS = 5;
 
-/** Rows per page inside the ledger. */
+/** Rows per page inside the ledger — shorter than a full page's table. */
 const PAGE_SIZE = 8;
-
-/** Most page buttons rendered at once, so a long history cannot grow a rail. */
-const PAGE_WINDOW = 7;
 
 const DATE = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -39,11 +38,6 @@ const QUANTITY = new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 });
 // Read once at load rather than per render. A day counter has no business
 // changing mid-session, and reading the clock during render isn't pure.
 const LOADED_AT = Date.now();
-
-/** A realised figure with its sign, always as money. */
-function signedUsd(value) {
-  return `${value >= 0 ? "+" : "−"}${formatUsd(Math.abs(value))}`;
-}
 
 function Highlight({ label, trade, value, tone, hint }) {
   const meta = trade ? coinMeta(trade.symbol) : null;
@@ -127,28 +121,11 @@ function ColumnHeader() {
   );
 }
 
-/**
- * The page numbers to render, windowed around the current page.
- *
- * A paper trader can close hundreds of positions; listing every page would
- * grow a rail of buttons wider than the table it belongs to.
- */
-function pageNumbers(current, count) {
-  if (count <= PAGE_WINDOW) {
-    return Array.from({ length: count }, (_, index) => index + 1);
-  }
-
-  const half = Math.floor(PAGE_WINDOW / 2);
-  const start = Math.min(Math.max(current - half, 1), count - PAGE_WINDOW + 1);
-  return Array.from({ length: PAGE_WINDOW }, (_, index) => start + index);
-}
-
 /** The whole ledger, a page at a time, in a dialog over the page. */
 function Ledger({ trades, open, onOpenChange }) {
   const [page, setPage] = useState(1);
 
-  const pageCount = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
-  const current = Math.min(page, pageCount);
+  const { count: pageCount, current } = pageOf(page, trades.length, PAGE_SIZE);
   const visible = trades.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   return (
@@ -177,50 +154,13 @@ function Ledger({ trades, open, onOpenChange }) {
           ))}
         </ul>
 
-        {pageCount > 1 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5 sm:px-6">
-            <p className="tabular text-xs text-faint">
-              {(current - 1) * PAGE_SIZE + 1}–{Math.min(current * PAGE_SIZE, trades.length)} of{" "}
-              {trades.length}
-            </p>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPage(current - 1)}
-                disabled={current === 1}
-                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-brand/50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line disabled:hover:text-muted-foreground"
-              >
-                Previous
-              </button>
-
-              {pageNumbers(current, pageCount).map((number) => (
-                <button
-                  key={number}
-                  type="button"
-                  onClick={() => setPage(number)}
-                  aria-current={number === current ? "page" : undefined}
-                  className={`tabular size-8 rounded-full text-xs transition-colors ${
-                    number === current
-                      ? "bg-brand font-semibold text-ink"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {number}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setPage(current + 1)}
-                disabled={current === pageCount}
-                className="rounded-full border border-line px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-brand/50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line disabled:hover:text-muted-foreground"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          page={current}
+          pageCount={pageCount}
+          total={trades.length}
+          size={PAGE_SIZE}
+          onChange={setPage}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -331,7 +271,7 @@ export default function Profile() {
       {/* Identity and the account facts are one card. Name and email are
           already in the header, so a separate details panel would have been
           three real rows padded out with two repeats. */}
-      <section className="accent-wash overflow-hidden rounded-2xl border border-line">
+      <section className="overflow-hidden rounded-2xl border border-line bg-panel">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-4 p-5 sm:p-6">
           <span
             style={{ "--tint": "var(--color-brand)" }}
