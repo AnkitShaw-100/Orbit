@@ -22,6 +22,71 @@ let reconnectTimer = null;
 let attempts = 0;
 let connected = false;
 
+/**
+ * Binance's front doors, tried in order.
+ *
+ * A 418 means the IP is banned for rate-limit violations — which on a shared
+ * cloud egress address means inheriting a ban another tenant earned, and no
+ * amount of politeness from Orbit will lift it. The same market data is served
+ * from several independent endpoints, so one refusal is not "no market data".
+ *
+ * data-api.binance.vision is the read-only market data mirror; the numbered
+ * hosts are Binance's own alternates. A host that answers is promoted to the
+ * front, so the survivor is tried first next time rather than re-walking the
+ * list on every call.
+ */
+const REST_HOSTS = [
+  env.binanceRestUrl,
+  "https://data-api.binance.vision",
+  "https://api-gcp.binance.com",
+  "https://api1.binance.com",
+  "https://api2.binance.com",
+  "https://api3.binance.com",
+  "https://api4.binance.com",
+].filter((host, index, all) => all.indexOf(host) === index);
+
+const WS_HOSTS = [
+  env.binanceWsUrl,
+  "wss://data-stream.binance.vision",
+  "wss://stream.binance.com:9443",
+  "wss://stream.binance.com:443",
+].filter((host, index, all) => all.indexOf(host) === index);
+
+/**
+ * GET a Binance path, walking the host list until one answers.
+ *
+ * Errors name the host and status rather than just the status: "responded 418"
+ * on its own cannot tell you whether a configuration change took effect.
+ */
+async function binanceGet(path) {
+  const failures = [];
+
+  for (const host of [...REST_HOSTS]) {
+    let response;
+    try {
+      response = await fetch(`${host}${path}`);
+    } catch (error) {
+      failures.push(`${host} unreachable (${error.message})`);
+      continue;
+    }
+
+    if (response.ok) {
+      if (host !== REST_HOSTS[0]) {
+        REST_HOSTS.splice(REST_HOSTS.indexOf(host), 1);
+        REST_HOSTS.unshift(host);
+        console.log(`[market] using ${host}`);
+      }
+      return response.json();
+    }
+
+    // 418 and 429 are bans, and every further request while banned extends
+    // one, so move on to the next host instead of retrying this one.
+    failures.push(`${host} responded ${response.status}`);
+  }
+
+  throw new Error(failures.join("; "));
+}
+
 // Binance lists leveraged tokens (BTCUP, ETHDOWN) alongside spot pairs. They
 // behave nothing like the asset they name, so they have no place in a product
 // whose whole point is teaching how spot trading works.
@@ -116,10 +181,7 @@ function record(symbol, data) {
  * volume, drop leveraged tokens and anything with no logo, keep the top N.
  */
 async function discoverAndSeed() {
-  const response = await fetch(`${env.binanceRestUrl}/api/v3/ticker/24hr`);
-  if (!response.ok) throw new Error(`Binance REST responded ${response.status}`);
-
-  const rows = await response.json();
+  const rows = await binanceGet("/api/v3/ticker/24hr");
   const byVolume = rows
     // Plain A-Z0-9 tickers only — Binance carries the odd non-Latin listing
     // that has no logo, no name and nothing sensible to render.
@@ -156,12 +218,16 @@ function connect() {
   // Binance every second, which is orders of magnitude more bandwidth than a
   // small instance should burn.
   const streams = symbols.map((symbol) => `${symbol.toLowerCase()}@ticker`).join("/");
-  socket = new WebSocket(`${env.binanceWsUrl}/stream?streams=${streams}`);
+
+  // Rotate hosts with each failed attempt for the same reason the REST client
+  // walks a list: a banned IP is banned at the door, not at the endpoint.
+  const host = WS_HOSTS[attempts % WS_HOSTS.length];
+  socket = new WebSocket(`${host}/stream?streams=${streams}`);
 
   socket.on("open", () => {
     attempts = 0;
     connected = true;
-    console.log(`[market] streaming ${symbols.length} symbols from Binance`);
+    console.log(`[market] streaming ${symbols.length} symbols from ${host}`);
   });
 
   socket.on("message", (raw) => {
@@ -190,10 +256,12 @@ function connect() {
     // a connection that is never going to open.
     attempts += 1;
     const delay = Math.min(30000, 1000 * 2 ** attempts);
-    console.warn(`[market] disconnected, retrying in ${delay}ms`);
+    console.warn(`[market] disconnected from ${host}, retrying in ${delay}ms`);
     reconnectTimer = setTimeout(connect, delay);
   });
 }
+
+let discoveryAttempts = 0;
 
 async function start() {
   try {
@@ -201,10 +269,18 @@ async function start() {
   } catch (error) {
     // Without the listing there is nothing to subscribe to, so retry rather
     // than starting up with an empty market list.
-    console.warn("[market] discovery failed, retrying in 10s:", error.message);
-    setTimeout(start, 10000).unref?.();
+    //
+    // The backoff grows because the usual reason discovery fails is a
+    // rate-limit ban, and a request sent while banned extends the ban — a
+    // fixed 10s retry is not patience, it is what keeps the ban alive.
+    discoveryAttempts += 1;
+    const delay = Math.min(300000, 10000 * 2 ** (discoveryAttempts - 1));
+    console.warn(`[market] discovery failed, retrying in ${delay / 1000}s: ${error.message}`);
+    setTimeout(start, delay).unref?.();
     return;
   }
+
+  discoveryAttempts = 0;
   connect();
 }
 
@@ -254,13 +330,14 @@ function getExecutionPrice(symbol) {
 async function fetchKlines(symbol, interval = "1h", limit = 120) {
   if (!isSupported(symbol)) throw ApiError.badRequest(`Orbit doesn't list ${symbol}`);
 
-  const url = `${env.binanceRestUrl}/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const response = await fetch(url);
-  if (!response.ok) {
+  let rows;
+  try {
+    rows = await binanceGet(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+  } catch (error) {
+    console.warn("[market] klines failed:", error.message);
     throw new ApiError(502, "Couldn't load candles from Binance. Try again shortly.");
   }
 
-  const rows = await response.json();
   return rows.map((row) => ({
     time: Math.floor(row[0] / 1000),
     open: Number(row[1]),
