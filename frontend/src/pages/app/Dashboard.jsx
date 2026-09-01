@@ -57,8 +57,12 @@ function SummaryBand({ name, days, totalValue, startingCash, cash, unrealised, t
         </div>
 
         {/* The number the removed bar existed to answer: ahead or behind the
-            start, in both money and percent, without a chart to read. */}
-        <div className="text-right leading-tight">
+            start, in both money and percent, without a chart to read.
+
+            Full width on a phone, where this wraps onto its own line: left to
+            itself the block shrinks to its content, and right-aligned text in
+            a shrunk box reads as a misalignment rather than as a column. */}
+        <div className="w-full text-center leading-tight sm:w-auto sm:text-right">
           <p
             className={`tabular font-display text-2xl font-bold tracking-[-0.03em] ${
               ahead ? "text-gain" : "text-loss"
