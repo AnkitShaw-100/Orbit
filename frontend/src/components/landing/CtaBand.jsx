@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import AuthLink from "@/components/auth/AuthLink";
 import { ArrowRight } from "lucide-react";
 
 export default function CtaBand() {
@@ -14,13 +15,13 @@ export default function CtaBand() {
             misconception about how easy this is.
           </p>
 
-          <Link
+          <AuthLink
             to="/signup"
             className="group mt-9 inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-void focus-visible:outline-none"
           >
             Start paper trading
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </Link>
+          </AuthLink>
         </div>
       </div>
     </section>

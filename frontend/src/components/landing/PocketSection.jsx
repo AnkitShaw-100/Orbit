@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import AuthLink from "@/components/auth/AuthLink";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDownLeft, ArrowUpRight, Bell, Copy, LayoutGrid, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/format";
@@ -185,12 +186,12 @@ export default function PocketSection({ ticker }) {
         </motion.p>
 
         <motion.div {...reveal(0.24)} className="relative z-10 mt-10">
-          <Link
+          <AuthLink
             to="/signup"
             className="inline-flex items-center rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-ink transition-transform hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             Open Orbit
-          </Link>
+          </AuthLink>
         </motion.div>
       </div>
     </section>

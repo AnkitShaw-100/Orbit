@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import AuthLink from "@/components/auth/AuthLink";
 import { ArrowRight } from "lucide-react";
 import CandleChart from "./CandleChart";
 import FactStrip from "./FactStrip";
@@ -71,7 +72,7 @@ export default function Hero({ tickers, status }) {
               className="orbit-rise mt-9 flex flex-wrap items-center justify-center gap-3"
               style={{ animationDelay: "220ms" }}
             >
-              <Link
+              <AuthLink
                 to="/signup"
                 className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-brand px-7 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-void focus-visible:outline-none"
               >
@@ -80,7 +81,7 @@ export default function Hero({ tickers, status }) {
                   className="size-4 transition-transform group-hover:translate-x-0.5"
                   aria-hidden="true"
                 />
-              </Link>
+              </AuthLink>
 
               <Link
                 to="/markets"

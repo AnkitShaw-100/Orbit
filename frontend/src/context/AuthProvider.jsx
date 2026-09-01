@@ -36,6 +36,18 @@ export function AuthProvider({ children }) {
         supabase.auth.signInWithPassword({ email, password }),
       signUp: (email, password, name) =>
         supabase.auth.signUp({ email, password, options: { data: { name } } }),
+      /**
+       * Google hands the browser back to `destination` with the session in the
+       * URL, which the client picks up on its own (detectSessionInUrl). The
+       * path has to be on Supabase's redirect allow list or the provider
+       * refuses it, so this builds an absolute URL from the current origin
+       * rather than trusting a configured one.
+       */
+      signInWithGoogle: (destination = "/dashboard") =>
+        supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: `${window.location.origin}${destination}` },
+        }),
       signOut: () => supabase.auth.signOut(),
     }),
     [session, loading],

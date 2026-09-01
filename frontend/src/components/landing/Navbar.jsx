@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import AuthLink from "@/components/auth/AuthLink";
 import { Menu, X } from "lucide-react";
 import OrbitMark from "@/components/OrbitMark";
 
@@ -48,18 +49,18 @@ export default function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
+          <AuthLink
             to="/login"
             className="rounded-sm px-2 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
           >
             Log in
-          </Link>
-          <Link
+          </AuthLink>
+          <AuthLink
             to="/signup"
             className="rounded-full bg-brand px-5 py-2 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-void focus-visible:outline-none"
           >
             Sign up
-          </Link>
+          </AuthLink>
         </div>
 
         <button
@@ -81,15 +82,15 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link to="/login" className="text-sm text-muted-foreground">
+            <AuthLink to="/login" className="text-sm text-muted-foreground">
               Log in
-            </Link>
-            <Link
+            </AuthLink>
+            <AuthLink
               to="/signup"
               className="rounded-full bg-brand px-5 py-2 text-center text-sm font-semibold text-ink"
             >
               Sign up
-            </Link>
+            </AuthLink>
           </div>
         </div>
       )}

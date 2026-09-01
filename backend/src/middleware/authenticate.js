@@ -54,8 +54,12 @@ const authenticate = asyncHandler(async (req, _res, next) => {
   if (!user) {
     if (!email) throw ApiError.unauthorized("Token is missing an email address");
 
+    // Email signup writes `name`; Google writes `full_name` and usually `name`
+    // too, but not dependably. The email prefix is the last resort — better a
+    // plain username than a blank one on the dashboard greeting.
+    const metadata = payload.user_metadata ?? {};
     const name =
-      payload.user_metadata?.name?.trim() || email.split("@")[0];
+      metadata.name?.trim() || metadata.full_name?.trim() || email.split("@")[0];
 
     user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({ data: { id, name, email } });

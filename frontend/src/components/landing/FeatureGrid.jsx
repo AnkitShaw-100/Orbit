@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import AuthLink from "@/components/auth/AuthLink";
 import { ArrowRight, Gauge, RefreshCw, Scale, Wallet } from "lucide-react";
 
 /**
@@ -44,7 +45,7 @@ export default function FeatureGrid() {
             constraints a real venue does, so the habits you build here transfer.
           </p>
 
-          <Link
+          <AuthLink
             to="/signup"
             className="group mt-8 inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-void focus-visible:outline-none"
           >
@@ -53,7 +54,7 @@ export default function FeatureGrid() {
               className="size-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden="true"
             />
-          </Link>
+          </AuthLink>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
