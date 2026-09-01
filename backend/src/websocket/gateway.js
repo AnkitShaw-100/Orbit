@@ -33,7 +33,7 @@ function attachGateway(server) {
     }
   });
 
-  // Railway drops idle connections; the heartbeat keeps them open and reaps
+  // Render drops idle connections; the heartbeat keeps them open and reaps
   // sockets whose browser vanished without a close frame.
   const heartbeat = setInterval(() => {
     for (const socket of wss.clients) {

@@ -25,7 +25,7 @@ async function start() {
 }
 
 /**
- * Railway replaces containers on every deploy and sends SIGTERM first. Closing
+ * Render replaces containers on every deploy and sends SIGTERM first. Closing
  * the upstream feed, the client sockets and the database pool in order avoids
  * dropping a request mid-flight or leaking a Postgres connection.
  */

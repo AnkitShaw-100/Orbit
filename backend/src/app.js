@@ -11,7 +11,7 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
-// Behind Railway's proxy, so client IPs arrive in X-Forwarded-For. Rate
+// Behind Render's proxy, so client IPs arrive in X-Forwarded-For. Rate
 // limiting (added once the endpoints settle) depends on this being right.
 app.set("trust proxy", 1);
 
