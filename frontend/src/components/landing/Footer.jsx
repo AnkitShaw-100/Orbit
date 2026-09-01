@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import OrbitMark from "@/components/OrbitMark";
 
 /**
  * Four columns, the way the reference lays a footer out — but only carrying
@@ -40,9 +41,7 @@ export default function Footer() {
       <div className="shell grid gap-10 md:grid-cols-[minmax(0,22rem)_1fr]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-full border border-brand/40">
-              <span className="size-1.5 rounded-full bg-brand" />
-            </span>
+            <OrbitMark className="size-7 shrink-0 text-brand" />
             <span className="font-display text-base font-bold tracking-tight text-foreground">
               Orbit
             </span>

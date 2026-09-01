@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
+import OrbitMark from "@/components/OrbitMark";
 
 const LINKS = [
   { label: "Markets", to: "/markets" },
@@ -27,9 +28,7 @@ export default function Navbar() {
             to="/"
             className="flex items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
           >
-            <span className="grid size-7 place-items-center rounded-full border border-brand/40">
-              <span className="size-1.5 rounded-full bg-brand" />
-            </span>
+            <OrbitMark className="size-7 shrink-0 text-brand" />
             <span className="font-display text-lg font-bold tracking-tight text-foreground">
               Orbit
             </span>

@@ -174,8 +174,12 @@
     --accent-ember: #C2410C;
     --accent-sky: #0369A1;
 
-    /* The hairline scrollbar reads against whatever it sits on. */
+    /* The hairline scrollbar reads against whatever it sits on. The track is
+       the surface it runs down, so the bar reads as a groove in the page
+       rather than a strip of chrome bolted to the side of it. */
+    --scroll-track: #F7F4EF;
     --scroll-thumb: rgba(0, 0, 0, 0.22);
+    --scroll-thumb-hover: rgba(0, 0, 0, 0.38);
 
     /* Two casts: a soft wide one for depth and a tight one to seat the edge.
        Warm-tinted rather than neutral black, to match the paper it falls on. */
@@ -234,7 +238,9 @@
     --accent-ember: #F97316;
     --accent-sky: #38BDF8;
 
+    --scroll-track: #0B0B0E;
     --scroll-thumb: rgba(255, 255, 255, 0.18);
+    --scroll-thumb-hover: rgba(255, 255, 255, 0.32);
 
     /* On a near-black panel the shadow does less work than the hairline does,
        so it only has to lift the surface, not outline it. */
@@ -401,6 +407,52 @@
 
 .dark {
   color-scheme: dark;
+}
+
+/*
+ * The window scrollbar.
+ *
+ * The OS default is a white slab with a grey slug in it, which against a near
+ * black page reads as a seam down the edge of the screen. This gives the
+ * document bar the same treatment .scroll-thin gives the panels: the track
+ * takes the page surface, the thumb is the same hairline value, and the
+ * transparent border insets the slug so it floats in the gutter instead of
+ * filling it. Unlike the panels it stays visible — the page bar is also the
+ * only indication of how far down the page you are.
+ */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+html::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html::-webkit-scrollbar-track,
+html::-webkit-scrollbar-corner {
+  background: var(--scroll-track);
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: var(--scroll-thumb);
+  border: 3px solid var(--scroll-track);
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scroll-thumb-hover);
+}
+
+/* The landing page renders terminal whatever the stored theme is (see .page
+   below), but the window scrollbar is painted from the root — so when the
+   landing page is what's mounted, the root borrows its palette too. */
+:root:has(.page) {
+  color-scheme: dark;
+  --scroll-track: #0B0B0E;
+  --scroll-thumb: rgba(255, 255, 255, 0.18);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.32);
 }
 
 /* The measure every boxed section shares. Narrow enough that table rows and

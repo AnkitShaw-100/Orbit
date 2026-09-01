@@ -7,6 +7,7 @@ import {
   Settings as SettingsIcon,
   User,
 } from "lucide-react";
+import OrbitMark from "@/components/OrbitMark";
 
 const LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -63,9 +64,7 @@ export default function Sidebar({ collapsed = false }) {
       } py-5`}
     >
       <NavLink to="/" className="mb-8 flex items-center gap-2 px-1.5">
-        <span className="grid size-7 shrink-0 place-items-center rounded-full border border-brand/40">
-          <span className="size-1.5 rounded-full bg-brand" />
-        </span>
+        <OrbitMark className="size-7 shrink-0 text-brand" title="Orbit" />
         <span className={`font-display text-lg font-bold tracking-tight text-foreground ${collapsed ? "sr-only" : ""}`}>
           Orbit
         </span>
