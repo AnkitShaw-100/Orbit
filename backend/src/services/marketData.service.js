@@ -1,6 +1,7 @@
-const WebSocket = require("ws");
 const env = require("../config/env");
 const ApiError = require("../utils/ApiError");
+const binance = require("./providers/binance");
+const bybit = require("./providers/bybit");
 
 /**
  * Owns Orbit's single upstream connection to Binance (TDD section 6).
@@ -18,74 +19,26 @@ const listeners = new Set();
 
 let symbols = [];
 let socket = null;
+let detach = null;
 let reconnectTimer = null;
 let attempts = 0;
 let connected = false;
 
 /**
- * Binance's front doors, tried in order.
+ * Where market data comes from, in order of preference.
  *
- * A 418 means the IP is banned for rate-limit violations — which on a shared
- * cloud egress address means inheriting a ban another tenant earned, and no
- * amount of politeness from Orbit will lift it. The same market data is served
- * from several independent endpoints, so one refusal is not "no market data".
+ * Binance is the source Orbit is built around, but it bans an IP that trips
+ * its rate limits — and on shared cloud egress that ban is usually inherited
+ * from a neighbour rather than earned, so it can neither be avoided by good
+ * behaviour nor waited out reliably. Bybit is the fallback: same symbol
+ * naming, so a failover changes nothing above this file.
  *
- * data-api.binance.vision is the read-only market data mirror; the numbered
- * hosts are Binance's own alternates. A host that answers is promoted to the
- * front, so the survivor is tried first next time rather than re-walking the
- * list on every call.
+ * Both are tried on every discovery, so the service returns to Binance by
+ * itself once a ban lifts rather than staying on the fallback forever.
  */
-const REST_HOSTS = [
-  env.binanceRestUrl,
-  "https://data-api.binance.vision",
-  "https://api-gcp.binance.com",
-  "https://api1.binance.com",
-  "https://api2.binance.com",
-  "https://api3.binance.com",
-  "https://api4.binance.com",
-].filter((host, index, all) => all.indexOf(host) === index);
+const PROVIDERS = [binance, bybit];
 
-const WS_HOSTS = [
-  env.binanceWsUrl,
-  "wss://data-stream.binance.vision",
-  "wss://stream.binance.com:9443",
-  "wss://stream.binance.com:443",
-].filter((host, index, all) => all.indexOf(host) === index);
-
-/**
- * GET a Binance path, walking the host list until one answers.
- *
- * Errors name the host and status rather than just the status: "responded 418"
- * on its own cannot tell you whether a configuration change took effect.
- */
-async function binanceGet(path) {
-  const failures = [];
-
-  for (const host of [...REST_HOSTS]) {
-    let response;
-    try {
-      response = await fetch(`${host}${path}`);
-    } catch (error) {
-      failures.push(`${host} unreachable (${error.message})`);
-      continue;
-    }
-
-    if (response.ok) {
-      if (host !== REST_HOSTS[0]) {
-        REST_HOSTS.splice(REST_HOSTS.indexOf(host), 1);
-        REST_HOSTS.unshift(host);
-        console.log(`[market] using ${host}`);
-      }
-      return response.json();
-    }
-
-    // 418 and 429 are bans, and every further request while banned extends
-    // one, so move on to the next host instead of retrying this one.
-    failures.push(`${host} responded ${response.status}`);
-  }
-
-  throw new Error(failures.join("; "));
-}
+let provider = PROVIDERS[0];
 
 // Binance lists leveraged tokens (BTCUP, ETHDOWN) alongside spot pairs. They
 // behave nothing like the asset they name, so they have no place in a product
@@ -180,31 +133,44 @@ function record(symbol, data) {
  * discovery costs nothing extra: sort every USDT spot pair by real traded
  * volume, drop leveraged tokens and anything with no logo, keep the top N.
  */
+async function fetchTickers() {
+  const failures = [];
+
+  for (const candidate of PROVIDERS) {
+    try {
+      const rows = await candidate.tickers();
+      if (candidate !== provider) {
+        console.log(`[market] switching to ${candidate.name}`);
+        provider = candidate;
+      }
+      return rows;
+    } catch (error) {
+      failures.push(`${candidate.name}: ${error.message}`);
+    }
+  }
+
+  throw new Error(failures.join(" | "));
+}
+
 async function discoverAndSeed() {
-  const rows = await binanceGet("/api/v3/ticker/24hr");
+  const rows = await fetchTickers();
   const byVolume = rows
     // Plain A-Z0-9 tickers only — Binance carries the odd non-Latin listing
     // that has no logo, no name and nothing sensible to render.
     .filter((row) => /^[A-Z0-9]+USDT$/.test(row.symbol) && !LEVERAGED.test(row.symbol))
     .filter((row) => !STABLE_BASES.has(row.symbol.slice(0, -4)))
-    .filter((row) => Number(row.quoteVolume) > 0)
-    .sort((a, b) => Number(b.quoteVolume) - Number(a.quoteVolume));
+    .filter((row) => row.quoteVolume > 0)
+    .sort((a, b) => b.quoteVolume - a.quoteVolume);
 
   const ranked = await keepIllustrated(byVolume, env.symbolLimit);
 
   symbols = ranked.map((row) => row.symbol);
 
-  ranked.forEach((row) =>
-    record(row.symbol, {
-      price: Number(row.lastPrice),
-      changePct: Number(row.priceChangePercent),
-      quoteVolume: Number(row.quoteVolume),
-      high: Number(row.highPrice),
-      low: Number(row.lowPrice),
-    }),
-  );
+  ranked.forEach(({ symbol, ...tick }) => record(symbol, tick));
 
-  console.log(`[market] listing ${symbols.length} markets, led by ${symbols.slice(0, 3).join(", ")}`);
+  console.log(
+    `[market] listing ${symbols.length} markets from ${provider.name}, led by ${symbols.slice(0, 3).join(", ")}`,
+  );
 }
 
 function connect() {
@@ -213,48 +179,44 @@ function connect() {
     return;
   }
 
-  // One combined stream for all listed pairs. Subscribing per symbol rather
-  // than to !ticker@arr matters: the all-market stream pushes every pair on
-  // Binance every second, which is orders of magnitude more bandwidth than a
-  // small instance should burn.
-  const streams = symbols.map((symbol) => `${symbol.toLowerCase()}@ticker`).join("/");
-
-  // Rotate hosts with each failed attempt for the same reason the REST client
-  // walks a list: a banned IP is banned at the door, not at the endpoint.
-  const host = WS_HOSTS[attempts % WS_HOSTS.length];
-  socket = new WebSocket(`${host}/stream?streams=${streams}`);
+  // The provider owns the transport — Binance carries its subscriptions in the
+  // URL, Bybit sends them over the socket and needs a heartbeat — so all this
+  // level knows is that ticks arrive and have to be recorded.
+  const stream = provider.openSocket(symbols, attempts);
+  const { host } = stream;
+  socket = stream.socket;
+  detach = stream.stop;
 
   socket.on("open", () => {
     attempts = 0;
     connected = true;
-    console.log(`[market] streaming ${symbols.length} symbols from ${host}`);
+    console.log(`[market] streaming ${symbols.length} symbols from ${provider.name} (${host})`);
   });
 
   socket.on("message", (raw) => {
-    let payload;
-    try {
-      payload = JSON.parse(raw).data;
-    } catch {
-      return;
-    }
-    if (!payload?.s) return;
+    const tick = provider.parse(raw);
+    if (!tick) return;
 
-    record(payload.s, {
-      price: Number(payload.c),
-      changePct: Number(payload.P),
-      quoteVolume: Number(payload.q),
-      high: Number(payload.h),
-      low: Number(payload.l),
-    });
+    const { symbol, ...values } = tick;
+    record(symbol, values);
   });
 
   socket.on("error", (error) => console.error("[market] socket error", error.message));
 
   socket.on("close", () => {
     connected = false;
-    // Binance blocks some regions outright, so back off rather than hammering
-    // a connection that is never going to open.
+    stream.stop();
     attempts += 1;
+
+    // Every few failures, go back through discovery rather than reconnecting
+    // again: a socket that will not open is usually the same ban the REST
+    // client would see, and discovery is what can switch providers.
+    if (attempts % 4 === 0) {
+      console.warn(`[market] ${provider.name} socket keeps failing, re-running discovery`);
+      reconnectTimer = setTimeout(start, 5000);
+      return;
+    }
+
     const delay = Math.min(30000, 1000 * 2 ** attempts);
     console.warn(`[market] disconnected from ${host}, retrying in ${delay}ms`);
     reconnectTimer = setTimeout(connect, delay);
@@ -286,6 +248,8 @@ async function start() {
 
 function stop() {
   clearTimeout(reconnectTimer);
+  detach?.();
+  detach = null;
   if (socket) {
     socket.removeAllListeners("close");
     socket.close();
@@ -330,22 +294,22 @@ function getExecutionPrice(symbol) {
 async function fetchKlines(symbol, interval = "1h", limit = 120) {
   if (!isSupported(symbol)) throw ApiError.badRequest(`Orbit doesn't list ${symbol}`);
 
-  let rows;
-  try {
-    rows = await binanceGet(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-  } catch (error) {
-    console.warn("[market] klines failed:", error.message);
-    throw new ApiError(502, "Couldn't load candles from Binance. Try again shortly.");
+  // Ordered so the provider currently serving prices is asked first: candles
+  // from one exchange under a price feed from another would disagree at the
+  // right-hand edge of the chart.
+  const ordered = [provider, ...PROVIDERS.filter((candidate) => candidate !== provider)];
+  const failures = [];
+
+  for (const candidate of ordered) {
+    try {
+      return await candidate.klines(symbol, interval, limit);
+    } catch (error) {
+      failures.push(`${candidate.name}: ${error.message}`);
+    }
   }
 
-  return rows.map((row) => ({
-    time: Math.floor(row[0] / 1000),
-    open: Number(row[1]),
-    high: Number(row[2]),
-    low: Number(row[3]),
-    close: Number(row[4]),
-    volume: Number(row[5]),
-  }));
+  console.warn("[market] klines failed —", failures.join(" | "));
+  throw new ApiError(502, "Couldn't load candles right now. Try again shortly.");
 }
 
 module.exports = {
