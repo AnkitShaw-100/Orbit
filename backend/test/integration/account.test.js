@@ -101,20 +101,9 @@ test("the same account can be traded again immediately after a reset", async () 
   assert.equal(wallet.balance.toFixed(2), "99800.00");
 });
 
-test("deleting an account removes every row it owned", async () => {
-  const userId = await seedAccount(prisma, { balance: "100000" });
-  await orders.placeOrder({ userId, symbol: "BTCUSDT", side: "BUY", quantity: "2" });
-
-  // The service refuses without a service role key, since it could not finish
-  // the job — so this covers the database half directly. The Supabase call is
-  // exercised separately, against Supabase.
-  await prisma.user.delete({ where: { id: userId } });
-
-  assert.equal(await prisma.wallet.count({ where: { userId } }), 0);
-  assert.deepEqual(await countsFor(userId), { positions: 0, orders: 0, transactions: 0 });
-});
-
 test("deleting refuses when no service role key is configured", async () => {
+  // The harness clears the key, so this is the state a deployment that never
+  // set one is in.
   const userId = await seedAccount(prisma, { balance: "100000" });
 
   await assert.rejects(() => account.deleteAccount(userId), (error) => {
@@ -126,4 +115,85 @@ test("deleting refuses when no service role key is configured", async () => {
   // deployment would wipe the data and then report that it could not.
   const wallet = await prisma.wallet.findUnique({ where: { userId } });
   assert.equal(wallet.balance.toFixed(2), "100000.00");
+});
+
+/**
+ * Runs `body` as though a service role key were configured, with `fetch`
+ * replaced so no request leaves the machine. The env module is a plain object
+ * read at call time, so this is a temporary field rather than a reload.
+ */
+async function withServiceKey(respond, body) {
+  const env = require("../../src/config/env");
+  const realFetch = global.fetch;
+  const calls = [];
+
+  env.supabaseServiceRoleKey = "test-service-role-key";
+  global.fetch = async (url, options) => {
+    calls.push({ url: String(url), options });
+    return respond();
+  };
+
+  try {
+    return await body(calls);
+  } finally {
+    global.fetch = realFetch;
+    env.supabaseServiceRoleKey = null;
+  }
+}
+
+test("deleting removes every row the account owned, then deletes the login", async () => {
+  const userId = await seedAccount(prisma, { balance: "100000" });
+  await orders.placeOrder({ userId, symbol: "BTCUSDT", side: "BUY", quantity: "2" });
+
+  await withServiceKey(
+    () => new Response(null, { status: 200 }),
+    async (calls) => {
+      await account.deleteAccount(userId);
+
+      assert.equal(calls.length, 1);
+      assert.match(calls[0].url, new RegExp(`/auth/v1/admin/users/${userId}$`));
+      assert.equal(calls[0].options.method, "DELETE");
+      assert.equal(
+        calls[0].options.headers.authorization,
+        "Bearer test-service-role-key",
+      );
+    },
+  );
+
+  assert.equal(await prisma.user.count({ where: { id: userId } }), 0);
+  assert.equal(await prisma.wallet.count({ where: { userId } }), 0);
+  assert.deepEqual(await countsFor(userId), { positions: 0, orders: 0, transactions: 0 });
+});
+
+test("a login that is already gone counts as deleted", async () => {
+  // Supabase answers 404 for a user that no longer exists, which is the state
+  // being asked for — a retry after a half-finished delete must not be stuck.
+  const userId = await seedAccount(prisma, { balance: "100000" });
+
+  await withServiceKey(
+    () => new Response(null, { status: 404 }),
+    () => account.deleteAccount(userId),
+  );
+
+  assert.equal(await prisma.user.count({ where: { id: userId } }), 0);
+});
+
+test("when Supabase refuses, the caller is told the data is already gone", async () => {
+  const userId = await seedAccount(prisma, { balance: "100000" });
+
+  await withServiceKey(
+    () => new Response("nope", { status: 500 }),
+    async () => {
+      await assert.rejects(() => account.deleteAccount(userId), (error) => {
+        assert.equal(error.status, 502);
+        // The message has to admit the halves came apart, since the rows are
+        // gone and the login is not. Claiming success would be a lie and
+        // claiming failure would imply the data survived.
+        assert.match(error.message, /deleted/i);
+        return true;
+      });
+    },
+  );
+
+  assert.equal(await prisma.user.count({ where: { id: userId } }), 0);
 });

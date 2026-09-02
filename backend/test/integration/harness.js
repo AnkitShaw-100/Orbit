@@ -27,7 +27,31 @@ const { execFileSync } = require("node:child_process");
  * database because an environment variable was set in the wrong shell is not a
  * mistake worth leaving available.
  */
+/**
+ * Makes the tests independent of whatever `.env` happens to hold.
+ *
+ * Two separate problems, both of which only appear in one environment and so
+ * are exactly the kind that get shipped:
+ *
+ * `config/env` fails loudly on a missing SUPABASE_URL, which is right for a
+ * server and wrong for a test run. A developer's machine has a .env and CI does
+ * not, so without a placeholder here the suite passes locally and fails on
+ * push. The value is never dialled — the only code that would is the admin
+ * delete, and no test lets it get that far.
+ *
+ * The service role key is cleared rather than defaulted, and that one matters:
+ * left set, the delete tests would send an admin request to a real Supabase
+ * project using a real key. A test suite must not hold live credentials for
+ * anything, least of all to run a destructive call against it.
+ */
+function applyTestConfig() {
+  process.env.SUPABASE_URL ??= "https://project.test.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "";
+}
+
 async function startDatabase() {
+  applyTestConfig();
+
   const provided = process.env.TEST_DATABASE_URL;
 
   if (provided) {
