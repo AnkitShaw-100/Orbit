@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { orbit } from "@/lib/api";
 
@@ -48,16 +49,31 @@ export function useTransactions(limit = 50) {
 export function usePlaceOrder() {
   const queryClient = useQueryClient();
 
+  /**
+   * One key per *intent*, not per call — which is the whole point of it.
+   *
+   * Minted outside the mutation and held until an order actually fills, so
+   * every submit that has not yet succeeded carries the same key. Two clicks
+   * land as two requests with one key: the first fills, the second blocks on
+   * the account lock, then finds the committed order and returns it instead of
+   * placing a second. Generating the key inside mutationFn instead would give
+   * each click its own, which defeats the entire mechanism.
+   *
+   * Rotated on success, so the next order is a genuinely new intent. A refused
+   * order keeps the key, which is correct: it wrote nothing, so retrying it is
+   * the same intent, not a new one. A remount mints a fresh key anyway, since
+   * the ref is per hook instance.
+   */
+  const intentKey = useRef(null);
+  if (intentKey.current === null) intentKey.current = crypto.randomUUID();
+
   return useMutation({
-    /**
-     * A key per attempt, minted here rather than in the pages, so every caller
-     * — the ticket, the dashboard's close button, the trade page's — is covered
-     * without each having to remember. One mutation attempt is one order however
-     * many times the request reaches the server.
-     */
     mutationFn: (order) =>
-      orbit.placeOrder({ ...order, idempotencyKey: order.idempotencyKey ?? crypto.randomUUID() }),
+      orbit.placeOrder({ ...order, idempotencyKey: order.idempotencyKey ?? intentKey.current }),
     onSuccess: () => {
+      // This intent is spent. Anything placed after it is a new order.
+      intentKey.current = crypto.randomUUID();
+
       // A fill moves cash, holdings and history at once — refresh all three
       // rather than trying to patch the caches by hand.
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });

@@ -99,6 +99,20 @@ model Transaction {
   userId      String   @map("user_id") @db.Uuid
   symbol      String
   realizedPnl Decimal? @map("realized_pnl") @db.Decimal(24, 8)
+
+  /// What this fill did to the cash balance, and what the balance stood at
+  /// once it had. Recorded rather than derived because cash movement is no
+  /// longer price x quantity: opening a short moves nothing and covering one
+  /// moves only its P&L, so rebuilding a balance from the orders table alone
+  /// would mean replaying every fill in sequence to recover the position each
+  /// one landed on. With these, any balance is auditable from its own row, and
+  /// a divergence shows up by summing the column against the wallet.
+  ///
+  /// Null on rows written before Orbit recorded this — honest about which
+  /// history can be verified and which cannot.
+  cashDelta    Decimal? @map("cash_delta") @db.Decimal(24, 8)
+  balanceAfter Decimal? @map("balance_after") @db.Decimal(24, 8)
+
   createdAt   DateTime @default(now()) @map("created_at")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)

@@ -65,7 +65,10 @@ async function liquidate(account, prices) {
 
   for (const position of marked) {
     try {
-      await orders.placeOrder({
+      // The size here is from the snapshot above; placeOrder clamps it to what
+      // is actually short once it holds the account lock, and skips the fill
+      // entirely if the position is already gone.
+      const result = await orders.placeOrder({
         userId: account.userId,
         symbol: position.symbol,
         // Covering a short means buying it back.
@@ -74,9 +77,17 @@ async function liquidate(account, prices) {
         liquidation: true,
       });
 
-      console.warn(
-        `[liquidation] closed ${position.symbol} short for user ${account.userId}`,
-      );
+      if (result.skipped) {
+        // Covered by the user, or by another instance, between the sweep's
+        // read and this fill. Nothing to do, and not a failure.
+        console.warn(
+          `[liquidation] ${position.symbol} already covered for user ${account.userId}`,
+        );
+      } else {
+        console.warn(
+          `[liquidation] closed ${position.symbol} short for user ${account.userId}`,
+        );
+      }
     } catch (error) {
       console.error(`[liquidation] failed on ${position.symbol}:`, error.message);
       continue;

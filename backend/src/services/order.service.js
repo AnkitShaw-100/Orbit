@@ -83,7 +83,6 @@ async function placeOrder({
   idempotencyKey = null,
 }) {
   const requested = assertQuantity(quantity);
-  const delta = signedDelta(side, requested);
 
   // Cheap check outside the transaction so a replay of a long-settled order
   // costs one indexed read rather than a lock. It is not the guarantee — the
@@ -95,7 +94,6 @@ async function placeOrder({
 
   // Server-side price. The client never supplies its own fill price.
   const executionPrice = new D(market.getExecutionPrice(symbol));
-  const total = orderTotal(executionPrice, requested);
 
   return prisma.$transaction(async (tx) => {
     // Before anything is read, so the balance and positions below cannot move
@@ -115,9 +113,35 @@ async function placeOrder({
 
     const positions = await tx.portfolio.findMany({ where: { userId } });
     const existing = positions.find((position) => position.symbol === symbol);
+    const held = new D(existing?.quantity ?? 0);
+
+    /**
+     * A liquidation was sized from a snapshot the sweep took before this lock
+     * was held, and the short may have shrunk or been covered since — by the
+     * user closing it themselves, or by a second server instance sweeping the
+     * same account. Buying the stale size would land on a flat position and
+     * open a long, and liquidation skips the cash and margin checks that would
+     * otherwise refuse it, so it could overdraw the account outright.
+     *
+     * The locked read is the authority. Never buy back more than is short.
+     */
+    const fillQuantity = liquidation ? D.min(requested, held.abs()) : requested;
+
+    if (liquidation && (!held.isNegative() || isFlat(fillQuantity))) {
+      return {
+        order: null,
+        transaction: null,
+        balance: new D(wallet.balance),
+        liquidation,
+        skipped: true,
+      };
+    }
+
+    const delta = signedDelta(side, fillQuantity);
+    const total = orderTotal(executionPrice, fillQuantity);
 
     const result = applyFill({
-      heldQuantity: existing?.quantity ?? 0,
+      heldQuantity: held,
       heldAverage: existing?.averagePrice ?? 0,
       delta,
       price: executionPrice,
@@ -127,7 +151,7 @@ async function placeOrder({
     // does neither: its proceeds are not the trader's to spend, so the balance
     // does not move until the short is bought back and books its P&L.
     const movement = cashDelta({
-      heldQuantity: existing?.quantity ?? 0,
+      heldQuantity: held,
       delta,
       price: executionPrice,
       realizedPnl: result.realizedPnl,
@@ -189,7 +213,7 @@ async function placeOrder({
         userId,
         symbol,
         side,
-        quantity: requested,
+        quantity: fillQuantity,
         executionPrice,
         total,
         status: "FILLED",
@@ -206,6 +230,10 @@ async function placeOrder({
         symbol,
         // Only the portion that closed books a profit; opening books nothing.
         realizedPnl: result.realizedPnl.isZero() ? null : result.realizedPnl,
+        // The cash side of the same fill, so a balance can be audited from its
+        // own row instead of replayed from the whole order history.
+        cashDelta: movement,
+        balanceAfter: nextBalance,
       },
     });
 

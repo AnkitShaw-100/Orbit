@@ -199,3 +199,91 @@ test("a long-only account is never at risk of liquidation", () => {
     }),
   );
 });
+
+/* ------------------------------------------------------- forced liquidation */
+
+/**
+ * The clamp placeOrder applies to a forced close, stated here as the arithmetic
+ * it comes down to: a liquidation is sized from a snapshot the sweep took
+ * before it held the account lock, so the locked read has to be able to shrink
+ * it — or refuse it outright.
+ */
+function clampToShort(requested, heldQuantity) {
+  const held = new D(heldQuantity);
+  const fill = D.min(new D(requested), held.abs());
+  if (!held.isNegative() || isFlat(fill)) return null;
+  return fill;
+}
+
+test("a liquidation never buys back more than is actually short", () => {
+  // The sweep saw 2 short; by the time the lock was taken only 0.5 remained.
+  assert.equal(clampToShort("2", "-0.5").toString(), "0.5");
+});
+
+test("a liquidation is skipped when the short is already covered", () => {
+  // The user closed it themselves between the sweep's read and this fill.
+  assert.equal(clampToShort("2", "0"), null);
+});
+
+test("a liquidation never touches a long", () => {
+  // Buying against a long would add to it — and liquidation skips the cash
+  // check, so it could overdraw the account outright.
+  assert.equal(clampToShort("2", "5"), null);
+});
+
+test("an unclamped liquidation would have opened a long", () => {
+  // What the clamp prevents: the stale size landing on a flat position.
+  const stale = applyFill({
+    heldQuantity: 0,
+    heldAverage: 0,
+    delta: signedDelta("BUY", "2"),
+    price: "60000",
+  });
+
+  assert.equal(stale.quantity.toString(), "2");
+  // And it would have cost 120000 with no cash check in the way.
+  assert.equal(
+    cashDelta({
+      heldQuantity: 0,
+      delta: signedDelta("BUY", "2"),
+      price: "60000",
+      realizedPnl: stale.realizedPnl,
+    }).toString(),
+    "-120000",
+  );
+});
+
+/* --------------------------------------------------------------- the ledger */
+
+test("summing the recorded cash movements reproduces the balance", () => {
+  // What cashDelta and balanceAfter on each transaction are for: the balance is
+  // auditable from history rather than trusted as a mutable column.
+  const fills = [
+    { side: "BUY", quantity: "20", price: "100" },
+    { side: "SELL", quantity: "20", price: "150" },
+    { side: "SELL", quantity: "1", price: "5000" }, // opens a short: no movement
+    { side: "BUY", quantity: "1", price: "4000" }, // covers it: books 1000
+  ];
+
+  let account = flat("10000");
+  const ledger = [];
+
+  for (const order of fills) {
+    const before = account.cash;
+    account = fill(account, order);
+    ledger.push({
+      cashDelta: account.cash.minus(before),
+      balanceAfter: account.cash,
+    });
+  }
+
+  const replayed = ledger.reduce((sum, row) => sum.plus(row.cashDelta), new D("10000"));
+
+  assert.equal(replayed.toFixed(2), account.cash.toFixed(2));
+  assert.equal(replayed.toFixed(2), "12000.00");
+  // Each row also stands alone, so a divergence is found without a full replay.
+  assert.equal(ledger.at(-1).balanceAfter.toFixed(2), "12000.00");
+  // The short leg moved nothing on open and 1000 on close.
+  assert.equal(ledger[2].cashDelta.toFixed(2), "0.00");
+  assert.equal(ledger[3].cashDelta.toFixed(2), "1000.00");
+});
