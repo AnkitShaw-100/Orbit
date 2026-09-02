@@ -85,6 +85,18 @@ const klineLimiter = limiter({
 });
 
 /**
+ * Resetting and deleting an account: rare, irreversible, and expensive, since
+ * each one deletes every row an account owns. Nobody legitimately does this
+ * more than a handful of times, and the confirmation step in the interface
+ * means a flood is either a script or a stuck client.
+ */
+const accountLimiter = limiter({
+  capacity: 5,
+  perMinute: 5,
+  message: "Too many account changes in a row. Wait a moment and try again.",
+});
+
+/**
  * Failed authentication, kept apart from the rest.
  *
  * Orbit issues no credentials of its own — Supabase does — so there is no
@@ -99,4 +111,4 @@ const klineLimiter = limiter({
 const authFailures = new TokenBucket({ capacity: 10, refillPerSecond: 10 / 300 });
 registry.add(authFailures);
 
-module.exports = { readLimiter, orderLimiter, klineLimiter, authFailures };
+module.exports = { readLimiter, orderLimiter, klineLimiter, accountLimiter, authFailures };

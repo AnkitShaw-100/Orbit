@@ -25,6 +25,17 @@ const env = {
   // Blank means the project uses asymmetric keys and we verify via JWKS.
   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET || null,
 
+  /**
+   * Admin key, needed only to delete a Supabase Auth user when someone deletes
+   * their Orbit account. Optional rather than required: everything else works
+   * without it, and refusing to boot over a feature most deployments never
+   * reach would be the wrong trade. The delete endpoint reports its absence.
+   *
+   * This key bypasses row-level security entirely. It is read here so it can
+   * never reach the browser, and it must never be sent to one.
+   */
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || null,
+
   binanceRestUrl: process.env.BINANCE_REST_URL ?? "https://api.binance.com",
   binanceWsUrl: process.env.BINANCE_WS_URL ?? "wss://stream.binance.com:9443",
 

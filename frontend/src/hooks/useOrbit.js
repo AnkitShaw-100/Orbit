@@ -46,6 +46,30 @@ export function useTransactions(limit = 50) {
   });
 }
 
+/**
+ * Back to $100,000 with nothing held and no history.
+ *
+ * Every cached query is dropped rather than invalidated: refetching would leave
+ * the old positions on screen until each request came back, and a wiped account
+ * still showing its holdings is alarming in a way a brief spinner is not.
+ */
+export function useResetAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: orbit.resetAccount,
+    onSuccess: () => queryClient.resetQueries(),
+  });
+}
+
+/**
+ * Deletes the account for good. The caller signs out afterwards — the token in
+ * hand stays valid until it expires, and it now points at nothing.
+ */
+export function useDeleteAccount() {
+  return useMutation({ mutationFn: orbit.deleteAccount });
+}
+
 export function usePlaceOrder() {
   const queryClient = useQueryClient();
 

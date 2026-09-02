@@ -34,6 +34,16 @@ class ApiError extends Error {
   static tooManyRequests(message, details) {
     return new ApiError(429, message, details);
   }
+
+  /** An upstream Orbit depends on answered, but not usefully. */
+  static badGateway(message) {
+    return new ApiError(502, message);
+  }
+
+  /** Orbit is running but this particular capability is not configured. */
+  static serviceUnavailable(message) {
+    return new ApiError(503, message);
+  }
 }
 
 module.exports = ApiError;

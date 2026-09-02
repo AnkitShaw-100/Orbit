@@ -3,8 +3,14 @@ const { body, param, query } = require("express-validator");
 
 const authenticate = require("../middleware/authenticate");
 const validate = require("../middleware/validate");
-const { readLimiter, orderLimiter, klineLimiter } = require("../middleware/rateLimit");
+const {
+  readLimiter,
+  orderLimiter,
+  klineLimiter,
+  accountLimiter,
+} = require("../middleware/rateLimit");
 const asyncHandler = require("../utils/asyncHandler");
+const account = require("../services/account.service");
 const market = require("../services/marketData.service");
 const orders = require("../services/order.service");
 const portfolio = require("../services/portfolio.service");
@@ -135,6 +141,30 @@ router.get(
   validate,
   asyncHandler(async (req, res) => {
     res.json({ transactions: await orders.listTransactions(req.user.id, req.query) });
+  }),
+);
+
+/* -------------------------------------------------------------- account */
+// Both are irreversible, so both are POST/DELETE rather than anything a link
+// or a prefetch could trigger, and the interface confirms before calling them.
+
+router.post(
+  "/account/reset",
+  accountLimiter,
+  authenticate,
+  asyncHandler(async (req, res) => {
+    res.json(await account.resetAccount(req.user.id));
+  }),
+);
+
+router.delete(
+  "/account",
+  accountLimiter,
+  authenticate,
+  asyncHandler(async (req, res) => {
+    await account.deleteAccount(req.user.id);
+    // Nothing left to describe, and the client signs out on the way out.
+    res.status(204).end();
   }),
 );
 

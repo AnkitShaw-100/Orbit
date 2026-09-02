@@ -56,7 +56,8 @@ export async function api(path, { method = "GET", body, auth = true } = {}) {
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
-  const payload = await response.json().catch(() => ({}));
+  // 204 carries no body, and asking for JSON that isn't there would throw.
+  const payload = response.status === 204 ? {} : await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new ApiError(
@@ -91,6 +92,8 @@ export const orbit = {
       method: "POST",
       body: { symbol, side, quantity, idempotencyKey },
     }),
+  resetAccount: () => api("/api/account/reset", { method: "POST" }),
+  deleteAccount: () => api("/api/account", { method: "DELETE" }),
 };
 
 export const WS_URL = BASE.replace(/^http/, "ws") + "/ws";

@@ -276,4 +276,7 @@ function listTransactions(userId, { limit = 50 } = {}) {
   });
 }
 
-module.exports = { placeOrder, listOrders, listTransactions };
+// `lockAccount` is exported so anything else that rewrites an account's money —
+// resetting it, for one — takes the same lock the trading engine does. Two
+// different locks would serialise nothing.
+module.exports = { placeOrder, listOrders, listTransactions, lockAccount };
