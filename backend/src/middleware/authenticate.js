@@ -3,6 +3,7 @@ const env = require("../config/env");
 const prisma = require("../lib/prisma");
 const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
+const { authFailures } = require("./rateLimit");
 
 // Supabase signs with either a project JWT secret (legacy HS256) or a rotating
 // asymmetric key published as JWKS. Resolve once at module load.
@@ -30,8 +31,27 @@ function readBearer(req) {
  * would break every balance check downstream.
  */
 const authenticate = asyncHandler(async (req, _res, next) => {
+  const address = req.ip ?? "unknown";
+
+  /**
+   * Refused before any signature is checked, so an address that has already
+   * spent its allowance cannot make Orbit do the cryptographic work — which is
+   * the expensive half, and the half worth protecting.
+   */
+  if (env.isProduction && authFailures.peek(address) < 1) {
+    throw ApiError.tooManyRequests(
+      "Too many failed sign-in attempts. Wait a few minutes and try again.",
+    );
+  }
+
+  /** Counts one failure against this address, then reports it as normal. */
+  const reject = (message) => {
+    if (env.isProduction) authFailures.take(address);
+    return ApiError.unauthorized(message);
+  };
+
   const token = readBearer(req);
-  if (!token) throw ApiError.unauthorized("Missing access token");
+  if (!token) throw reject("Missing access token");
 
   let payload;
   try {
@@ -39,12 +59,16 @@ const authenticate = asyncHandler(async (req, _res, next) => {
       issuer: `${env.supabaseUrl}/auth/v1`,
     }));
   } catch {
-    throw ApiError.unauthorized("Your session has expired. Sign in again.");
+    throw reject("Your session has expired. Sign in again.");
   }
+
+  // A valid token clears the record: a user who mistyped their way to a few
+  // stale-token 401s should not be carrying that against them afterwards.
+  authFailures.reset(address);
 
   const id = payload.sub;
   const email = payload.email ?? null;
-  if (!id) throw ApiError.unauthorized("Token is missing a subject");
+  if (!id) throw reject("Token is missing a subject");
 
   let user = await prisma.user.findUnique({
     where: { id },
@@ -52,7 +76,7 @@ const authenticate = asyncHandler(async (req, _res, next) => {
   });
 
   if (!user) {
-    if (!email) throw ApiError.unauthorized("Token is missing an email address");
+    if (!email) throw reject("Token is missing an email address");
 
     // Email signup writes `name`; Google writes `full_name` and usually `name`
     // too, but not dependably. The email prefix is the last resort — better a

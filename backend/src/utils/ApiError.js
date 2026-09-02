@@ -30,6 +30,10 @@ class ApiError extends Error {
   static conflict(message) {
     return new ApiError(409, message);
   }
+
+  static tooManyRequests(message, details) {
+    return new ApiError(429, message, details);
+  }
 }
 
 module.exports = ApiError;
