@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import OrbitMark from "@/components/OrbitMark";
+import Spinner from "@/components/Spinner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/context/authContext";
 
@@ -176,8 +177,10 @@ export default function AuthDialog({ mode }) {
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-full bg-brand py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            aria-busy={busy}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {busy && <Spinner />}
             {busy ? copy.busy : copy.action}
           </button>
         </form>

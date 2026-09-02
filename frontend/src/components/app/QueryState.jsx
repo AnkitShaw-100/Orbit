@@ -1,3 +1,5 @@
+import Spinner from "@/components/Spinner";
+
 /**
  * Shared loading and failure states for the signed-in screens.
  *
@@ -7,8 +9,8 @@
  */
 export function Loading({ label = "Loading" }) {
   return (
-    <div className="grid place-items-center py-16">
-      <span className="size-5 animate-spin rounded-full border-2 border-foreground/15 border-t-foreground/70" />
+    <div className="grid place-items-center py-16 text-muted-foreground">
+      <Spinner className="size-5" />
       <span className="sr-only">{label}</span>
     </div>
   );

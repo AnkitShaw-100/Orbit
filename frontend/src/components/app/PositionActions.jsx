@@ -10,6 +10,8 @@
  * component: a page shows several positions at once and only one of them may
  * be mid-confirmation, which is a fact about the list, not about a button.
  */
+import Spinner from "@/components/Spinner";
+
 export default function PositionActions({
   armed,
   pending = false,
@@ -21,7 +23,7 @@ export default function PositionActions({
   onConfirm,
 }) {
   const base =
-    "rounded-full px-4 py-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none";
+    "inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none";
 
   if (armed) {
     return (
@@ -30,8 +32,10 @@ export default function PositionActions({
           type="button"
           onClick={onConfirm}
           disabled={pending || cooldown > 0}
+          aria-busy={pending}
           className={`${base} bg-loss text-on-loss hover:brightness-110 disabled:opacity-60`}
         >
+          {pending && <Spinner className="size-3" />}
           {pending ? "Closing…" : cooldown > 0 ? `Wait ${cooldown}s` : "Confirm close"}
         </button>
         <button

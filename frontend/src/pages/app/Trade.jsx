@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
+import Spinner from "@/components/Spinner";
 import CandleChart from "@/components/landing/CandleChart";
 import CoinCell, { SideBadge } from "@/components/app/CoinCell";
 import PositionActions from "@/components/app/PositionActions";
@@ -623,7 +624,8 @@ export default function Trade() {
             type="button"
             onClick={submit}
             disabled={blocked}
-            className={`mt-4 w-full rounded-full py-3 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none ${
+            aria-busy={placeOrder.isPending}
+            className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none ${
               blocked
                 ? "cursor-not-allowed bg-foreground/10 text-faint"
                 : side === "BUY"
@@ -631,6 +633,7 @@ export default function Trade() {
                   : "bg-loss text-on-loss hover:brightness-110"
             }`}
           >
+            {placeOrder.isPending && <Spinner />}
             {placeOrder.isPending
               ? "Placing…"
               : cooldown > 0

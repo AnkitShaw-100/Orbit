@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Monitor, Moon, Sun } from "lucide-react";
+import Spinner from "@/components/Spinner";
 import { Panel } from "@/components/app/Panel";
 import { useAuth } from "@/context/authContext";
 import { formatUsd } from "@/lib/format";
@@ -64,8 +65,10 @@ function Confirm({ label, pending, pendingLabel, onConfirm, onCancel }) {
         type="button"
         onClick={onConfirm}
         disabled={pending}
-        className="rounded-full bg-loss px-4 py-2 text-xs font-semibold text-on-loss disabled:opacity-60"
+        aria-busy={pending}
+        className="inline-flex items-center justify-center gap-1.5 rounded-full bg-loss px-4 py-2 text-xs font-semibold text-on-loss disabled:opacity-60"
       >
+        {pending && <Spinner className="size-3" />}
         {pending ? pendingLabel : label}
       </button>
       <button

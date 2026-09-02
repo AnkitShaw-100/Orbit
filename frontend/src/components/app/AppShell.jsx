@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
 import Sidebar from "./Sidebar";
+import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/authContext";
 import { useMe, usePortfolio } from "@/hooks/useOrbit";
 import { useTheme } from "@/hooks/useTheme";
@@ -41,9 +42,20 @@ export default function AppShell() {
   const title = TITLES[pathname] ?? "Orbit";
   const initial = (me.data?.user?.name ?? "?").slice(0, 1).toUpperCase();
 
+  // Signing out clears the session with Supabase before the redirect, so it is
+  // a network round trip like any other: it can hang on a slow connection, and
+  // a button that looks untouched invites a second click at exactly the wrong
+  // moment.
+  const [signingOut, setSigningOut] = useState(false);
+
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/", { replace: true });
+    setSigningOut(true);
+    try {
+      await signOut();
+      navigate("/", { replace: true });
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -123,10 +135,16 @@ export default function AppShell() {
             <button
               type="button"
               onClick={handleSignOut}
-              aria-label="Sign out"
-              className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground transition-colors hover:border-loss/50 hover:text-loss"
+              disabled={signingOut}
+              aria-busy={signingOut}
+              aria-label={signingOut ? "Signing out" : "Sign out"}
+              className="grid size-9 place-items-center rounded-full border border-line text-muted-foreground transition-colors hover:border-loss/50 hover:text-loss disabled:opacity-60"
             >
-              <LogOut className="size-4" aria-hidden="true" />
+              {signingOut ? (
+                <Spinner className="size-4" />
+              ) : (
+                <LogOut className="size-4" aria-hidden="true" />
+              )}
             </button>
           </div>
         </header>
