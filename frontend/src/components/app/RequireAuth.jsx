@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "react-router";
+import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/authContext";
 
 /**
@@ -12,8 +13,8 @@ export default function RequireAuth({ children }) {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-void">
-        <span className="size-6 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />
+      <div className="grid min-h-screen place-items-center bg-void text-foreground">
+        <Spinner className="size-6" />
         <span className="sr-only">Loading your account</span>
       </div>
     );

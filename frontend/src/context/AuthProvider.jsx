@@ -49,6 +49,18 @@ export function AuthProvider({ children }) {
           options: { redirectTo: `${window.location.origin}${destination}` },
         }),
       signOut: () => supabase.auth.signOut(),
+      /**
+       * Changes the password of the signed-in user. Supabase verifies the
+       * session rather than the old password, so there is nothing to send but
+       * the new one — and nothing for Orbit to see either way.
+       */
+      updatePassword: (password) => supabase.auth.updateUser({ password }),
+      /**
+       * Revokes every refresh token this account holds, not just this tab's.
+       * That is the difference between signing out and signing out everywhere:
+       * a session left open on a shared machine dies with this call.
+       */
+      signOutEverywhere: () => supabase.auth.signOut({ scope: "global" }),
     }),
     [session, loading],
   );

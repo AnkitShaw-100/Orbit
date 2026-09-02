@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import { useNavigate } from "react-router";
 // Tabler, not the app's usual lucide set: it carries the trading-specific
 // glyphs — a candle chart, an arrow in a bullseye — that a generic icon pack
 // only approximates. One family across all four so the strokes match.
 import { TbChartBar, TbReceipt2, TbScale, TbTargetArrow } from "react-icons/tb";
+import Spinner from "@/components/Spinner";
 import CoinIcon from "@/components/landing/CoinIcon";
+import { useAuth } from "@/context/authContext";
 import { Cell, CellRow, Panel, StatCard } from "@/components/app/Panel";
 import Pagination from "@/components/app/Pagination";
 import { pageOf } from "@/lib/paging";
@@ -244,6 +247,220 @@ function TradingHistory({ trades }) {
   );
 }
 
+const MIN_PASSWORD = 8;
+
+/**
+ * Changing a password, and dropping every session the account holds.
+ *
+ * Both are Supabase's to perform, not Orbit's: Orbit stores no credentials and
+ * issues no tokens, so it has nothing to change and nothing to revoke. That is
+ * why neither of these calls an Orbit endpoint.
+ */
+function Security() {
+  const { user, updatePassword, signOutEverywhere } = useAuth();
+  const navigate = useNavigate();
+  const fieldId = useId();
+
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [done, setDone] = useState(null);
+  const [leaving, setLeaving] = useState(false);
+
+  /**
+   * A Google account has no password to change — Supabase would accept one and
+   * quietly add a second way in, which is not what the button offers. Identities
+   * is the reliable check: `provider` names how this session was created, while
+   * an account can hold both.
+   */
+  const hasPassword = (user?.identities ?? []).some(
+    (identity) => identity.provider === "email",
+  );
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError(null);
+
+    const form = new FormData(event.currentTarget);
+    const password = form.get("password");
+
+    if (String(password).length < MIN_PASSWORD) {
+      setError(`Use at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    if (password !== form.get("confirm")) {
+      setError("Those two passwords don't match.");
+      return;
+    }
+
+    setBusy(true);
+    const { error: failed } = await updatePassword(password);
+    setBusy(false);
+
+    if (failed) {
+      setError(failed.message);
+      return;
+    }
+
+    setOpen(false);
+    setDone("Password changed. Your other devices stay signed in.");
+  };
+
+  /**
+   * This signs out the tab it was clicked in too, which is the point rather
+   * than a side effect: "everywhere" that spared the device in front of you
+   * would be a strange promise to keep.
+   */
+  const leaveEverywhere = async () => {
+    setDone(null);
+    setError(null);
+    setLeaving(true);
+
+    const { error: failed } = await signOutEverywhere();
+
+    if (failed) {
+      setLeaving(false);
+      setError(failed.message);
+      return;
+    }
+
+    navigate("/", { replace: true });
+  };
+
+  const field =
+    "w-full rounded-xl border border-line bg-void px-3.5 py-2.5 text-sm text-foreground placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none";
+
+  return (
+    <Panel title="Security">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5">
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Your password protects your trading history and nothing else — Orbit
+          holds no funds and stores no payment details. Sign-in is handled by
+          Supabase; Orbit never sees your password.
+        </p>
+
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setDone(null);
+              setOpen(true);
+            }}
+            disabled={!hasPassword}
+            title={hasPassword ? undefined : "You sign in with Google, so there's no password to change."}
+            className="rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Change password
+          </button>
+          <button
+            type="button"
+            onClick={leaveEverywhere}
+            disabled={leaving}
+            aria-busy={leaving}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none disabled:opacity-60"
+          >
+            {leaving && <Spinner className="size-3" />}
+            {leaving ? "Signing out…" : "Sign out everywhere"}
+          </button>
+        </div>
+      </div>
+
+      {!hasPassword && (
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          You sign in with Google, so there's no Orbit password to change. Your
+          Google account settings control access.
+        </p>
+      )}
+
+      {(done || error) && !open && (
+        <p
+          role="status"
+          className={`mt-4 rounded-xl px-3.5 py-2.5 text-[11px] leading-relaxed ${
+            error
+              ? "border border-loss/30 bg-loss/10 text-loss"
+              : "border border-gain/30 bg-gain/10 text-gain"
+          }`}
+        >
+          {error ?? done}
+        </p>
+      )}
+
+      <Dialog open={open} onOpenChange={(next) => !busy && setOpen(next)}>
+        <DialogContent className="page max-w-[calc(100%-2rem)] rounded-2xl border border-line bg-panel p-7 sm:max-w-100">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg font-bold tracking-[-0.02em]">
+              Change password
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Your other devices stay signed in. Use “Sign out everywhere” if you
+              want them out.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={submit} className="mt-2 space-y-3 text-left">
+            <div className="space-y-1.5">
+              <label htmlFor={`${fieldId}-new`} className="text-xs text-muted-foreground">
+                New password
+              </label>
+              <input
+                id={`${fieldId}-new`}
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={MIN_PASSWORD}
+                placeholder={`At least ${MIN_PASSWORD} characters`}
+                className={field}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor={`${fieldId}-confirm`} className="text-xs text-muted-foreground">
+                Confirm new password
+              </label>
+              <input
+                id={`${fieldId}-confirm`}
+                name="confirm"
+                type="password"
+                autoComplete="new-password"
+                required
+                className={field}
+              />
+            </div>
+
+            {error && (
+              <p className="rounded-xl border border-loss/30 bg-loss/10 px-3.5 py-2.5 text-[11px] leading-relaxed text-loss">
+                {error}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                disabled={busy}
+                className="rounded-full border border-line px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                aria-busy={busy}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-ink disabled:opacity-60"
+              >
+                {busy && <Spinner className="size-3" />}
+                {busy ? "Saving…" : "Save password"}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </Panel>
+  );
+}
+
 export default function Profile() {
   const me = useMe();
   const orders = useOrders(200);
@@ -347,30 +564,7 @@ export default function Profile() {
 
       <TradingHistory trades={closed} />
 
-      <Panel title="Security">
-        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5">
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Your password protects your trading history and nothing else — Orbit
-            holds no funds and stores no payment details. Sign-in is handled by
-            Supabase; Orbit never sees your password.
-          </p>
-
-          <div className="flex flex-wrap gap-2.5">
-            <button
-              type="button"
-              className="rounded-full bg-brand px-5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none"
-            >
-              Change password
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-line px-5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/25 hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none"
-            >
-              Sign out everywhere
-            </button>
-          </div>
-        </div>
-      </Panel>
+      <Security />
     </div>
   );
 }
