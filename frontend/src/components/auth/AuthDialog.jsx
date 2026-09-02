@@ -4,6 +4,7 @@ import OrbitMark from "@/components/OrbitMark";
 import Spinner from "@/components/Spinner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/context/authContext";
+import { celebrate } from "@/lib/celebrate";
 
 /**
  * Signing in without leaving the page.
@@ -118,9 +119,12 @@ export default function AuthDialog({ mode }) {
       return;
     }
 
+    // The account exists now, whether or not a session came back with it.
+    if (mode === "signup") celebrate();
+
     // With email confirmation on, Supabase returns a user but no session.
     if (mode === "signup" && !data.session) {
-      setNotice("Check your inbox to confirm your address, then sign in.");
+      setNotice("Welcome to Orbit! Check your inbox to confirm your address, then sign in.");
       return;
     }
 
