@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/context/authContext";
-import { useMe } from "@/hooks/useOrbit";
+import { useMe, usePortfolio } from "@/hooks/useOrbit";
 import { useTheme } from "@/hooks/useTheme";
 import { formatUsd } from "@/lib/format";
 
@@ -18,8 +18,16 @@ const TITLES = {
 
 /**
  * Chrome for every signed-in screen: permanent sidebar on desktop, a drawer on
- * mobile, and a top bar carrying the wallet balance — the number a paper
+ * mobile, and a top bar carrying what the account is worth — the number a paper
  * trader checks most often, so it stays visible on every page.
+ *
+ * Portfolio value rather than the wallet balance, because a short sale credits
+ * its proceeds to cash: sell $100k of a coin you don't hold and the balance
+ * reads $200k, while the position it opened is worth -$100k and the account is
+ * worth exactly what it was. Showing raw cash here made an ordinary short look
+ * like the platform had minted money, and contradicted the dashboard on the
+ * next screen down. Cash is still reported on Dashboard and Trade, where the
+ * position it is offset by is visible beside it.
  */
 export default function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -27,6 +35,7 @@ export default function AppShell() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const me = useMe();
+  const portfolio = usePortfolio();
   const { resolved, toggle } = useTheme();
 
   const title = TITLES[pathname] ?? "Orbit";
@@ -84,9 +93,9 @@ export default function AppShell() {
             <span className="hidden items-center gap-2 rounded-full border border-line px-3.5 py-2 sm:flex">
               <Wallet className="size-4 text-muted-foreground" aria-hidden="true" />
               <span className="tabular text-sm font-medium text-foreground">
-                {me.data ? formatUsd(Number(me.data.wallet.balance)) : "—"}
+                {portfolio.data ? formatUsd(Number(portfolio.data.totalValue)) : "—"}
               </span>
-              <span className="text-[11px] text-faint">cash</span>
+              <span className="text-[11px] text-faint">portfolio</span>
             </span>
 
             <button

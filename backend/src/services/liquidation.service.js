@@ -46,6 +46,7 @@ function markAll(positions, prices) {
   return positions.map((position) => ({
     symbol: position.symbol,
     quantity: position.quantity,
+    averagePrice: position.averagePrice,
     price: prices[position.symbol]?.price ?? position.averagePrice,
   }));
 }

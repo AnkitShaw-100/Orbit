@@ -5,6 +5,7 @@ const {
   D,
   signedDelta,
   applyFill,
+  cashDelta,
   isFlat,
   equityOf,
   shortNotionalOf,
@@ -135,16 +136,29 @@ test("a long still behaves exactly as before", () => {
   assert.equal(isFlat(closed.quantity), true);
 });
 
-test("equity subtracts shorts and adds longs", () => {
+test("equity counts longs at market and shorts at their P&L", () => {
   const equity = equityOf({
     cash: "100000",
     positions: [
-      { quantity: "0.5", price: "60000" }, // +30000
-      { quantity: "-1", price: "20000" }, // -20000
+      // Bought with cash, so worth what the market pays.
+      { quantity: "0.5", averagePrice: "40000", price: "60000" }, // +30000
+      // Shorted at 25000, now 20000 — the proceeds were never credited, so all
+      // this contributes is the 5000 it has made.
+      { quantity: "-1", averagePrice: "25000", price: "20000" }, // +5000
     ],
   });
 
-  assert.equal(equity.toString(), "110000");
+  assert.equal(equity.toString(), "135000");
+});
+
+test("an untouched short is worth nothing to equity", () => {
+  // Shorting must not move the account's worth on its own.
+  const equity = equityOf({
+    cash: "100000",
+    positions: [{ quantity: "-1", averagePrice: "10000", price: "10000" }],
+  });
+
+  assert.equal(equity.toString(), "100000");
 });
 
 test("shortNotional counts only shorts, at market", () => {
@@ -184,14 +198,139 @@ test("liquidation triggers below a quarter of exposure", () => {
   assert.equal(needsLiquidation({ equity: "1", shortNotional: "0" }), false);
 });
 
-test("a full short lifecycle returns cash to the starting figure", () => {
-  // Short 1 at 60000 then cover at 60000: proceeds in, cost out, no profit.
-  const start = new D("100000");
-  const proceeds = new D("60000");
-  const cost = new D("60000");
+/* ------------------------------------------------------------------- cash */
 
-  const afterOpen = start.plus(proceeds);
-  const afterCover = afterOpen.minus(cost);
+/** One fill against a position, returning the resulting balance. */
+function fill({ cash, heldQuantity, heldAverage, side, quantity, price }) {
+  const delta = signedDelta(side, quantity);
+  const result = applyFill({ heldQuantity, heldAverage, delta, price });
+  const balance = new D(cash).plus(
+    cashDelta({ heldQuantity, delta, price, realizedPnl: result.realizedPnl }),
+  );
+  return { ...result, balance };
+}
 
-  assert.equal(afterCover.toFixed(2), "100000.00");
+test("opening a short leaves the balance where it was", () => {
+  // The proceeds are owed back, not earned, so they are not spendable cash.
+  const after = fill({
+    cash: "100000",
+    heldQuantity: 0,
+    heldAverage: 0,
+    side: "SELL",
+    quantity: "1",
+    price: "10000",
+  });
+
+  assert.equal(after.balance.toFixed(2), "100000.00");
+  assert.equal(after.quantity.toString(), "-1");
+});
+
+test("covering a short applies only its profit or loss", () => {
+  const won = fill({
+    cash: "100000",
+    heldQuantity: "-1",
+    heldAverage: "10000",
+    side: "BUY",
+    quantity: "1",
+    price: "8000",
+  });
+  assert.equal(won.balance.toFixed(2), "102000.00");
+
+  const lost = fill({
+    cash: "100000",
+    heldQuantity: "-1",
+    heldAverage: "10000",
+    side: "BUY",
+    quantity: "1",
+    price: "12000",
+  });
+  assert.equal(lost.balance.toFixed(2), "98000.00");
+});
+
+test("a short round trip at the same price is a no-op on cash", () => {
+  const opened = fill({
+    cash: "100000",
+    heldQuantity: 0,
+    heldAverage: 0,
+    side: "SELL",
+    quantity: "1",
+    price: "60000",
+  });
+  const covered = fill({
+    cash: opened.balance,
+    heldQuantity: opened.quantity,
+    heldAverage: opened.averagePrice,
+    side: "BUY",
+    quantity: "1",
+    price: "60000",
+  });
+
+  assert.equal(covered.balance.toFixed(2), "100000.00");
+});
+
+test("a partial cover books only the closed portion", () => {
+  const after = fill({
+    cash: "100000",
+    heldQuantity: "-2",
+    heldAverage: "65000",
+    side: "BUY",
+    quantity: "0.5",
+    price: "60000",
+  });
+
+  assert.equal(after.balance.toFixed(2), "102500.00");
+});
+
+test("longs still pay out and cost in full", () => {
+  const bought = fill({
+    cash: "100000",
+    heldQuantity: 0,
+    heldAverage: 0,
+    side: "BUY",
+    quantity: "1",
+    price: "60000",
+  });
+  assert.equal(bought.balance.toFixed(2), "40000.00");
+
+  const sold = fill({
+    cash: bought.balance,
+    heldQuantity: bought.quantity,
+    heldAverage: bought.averagePrice,
+    side: "SELL",
+    quantity: "1",
+    price: "64000",
+  });
+  assert.equal(sold.balance.toFixed(2), "104000.00");
+});
+
+test("flipping a long into a short pays for the long only", () => {
+  // Hold 1 at 50000, sell 3 at 60000: 60000 comes back for the holding, and
+  // the 2-unit short that opens brings in nothing.
+  const after = fill({
+    cash: "10000",
+    heldQuantity: "1",
+    heldAverage: "50000",
+    side: "SELL",
+    quantity: "3",
+    price: "60000",
+  });
+
+  assert.equal(after.quantity.toString(), "-2");
+  assert.equal(after.balance.toFixed(2), "70000.00");
+});
+
+test("flipping a short into a long books the cover and buys the rest", () => {
+  // Short 1 at 60000, buy 3 at 50000: 10000 profit on the cover, then 2 units
+  // bought at 50000.
+  const after = fill({
+    cash: "150000",
+    heldQuantity: "-1",
+    heldAverage: "60000",
+    side: "BUY",
+    quantity: "3",
+    price: "50000",
+  });
+
+  assert.equal(after.quantity.toString(), "2");
+  assert.equal(after.balance.toFixed(2), "60000.00");
 });

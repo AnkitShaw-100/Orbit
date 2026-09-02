@@ -57,8 +57,17 @@ export const orbit = {
     api(`/api/markets/${symbol}/klines?interval=${interval}&limit=${limit}`, { auth: false }),
   orders: (limit = 50) => api(`/api/orders?limit=${limit}`),
   transactions: (limit = 50) => api(`/api/transactions?limit=${limit}`),
-  placeOrder: ({ symbol, side, quantity }) =>
-    api("/api/orders", { method: "POST", body: { symbol, side, quantity } }),
+  /**
+   * `idempotencyKey` makes the request safe to send twice. React Query retries
+   * on network failure and a user can double-click faster than a round trip,
+   * either of which would otherwise fill the same order twice; with a key the
+   * server returns the original fill instead of placing a second one.
+   */
+  placeOrder: ({ symbol, side, quantity, idempotencyKey }) =>
+    api("/api/orders", {
+      method: "POST",
+      body: { symbol, side, quantity, idempotencyKey },
+    }),
 };
 
 export const WS_URL = BASE.replace(/^http/, "ws") + "/ws";

@@ -92,6 +92,7 @@ router.post(
   body("quantity")
     .isFloat({ gt: 0 })
     .withMessage("Enter a quantity greater than zero"),
+  body("idempotencyKey").optional().isString().trim().isLength({ min: 8, max: 128 }),
   validate,
   asyncHandler(async (req, res) => {
     const result = await orders.placeOrder({
@@ -99,12 +100,17 @@ router.post(
       symbol: req.body.symbol,
       side: req.body.side,
       quantity: req.body.quantity,
+      // Header first, since that is where the convention puts it; the body is
+      // accepted too so a client that cannot set headers is not shut out.
+      idempotencyKey: req.get("Idempotency-Key") ?? req.body.idempotencyKey ?? null,
     });
 
-    res.status(201).json({
+    // 200 rather than 201 on a replay: nothing was created this time round.
+    res.status(result.replayed ? 200 : 201).json({
       order: result.order,
-      realizedPnl: result.transaction.realizedPnl,
+      realizedPnl: result.transaction?.realizedPnl ?? null,
       balance: result.balance.toFixed(2),
+      replayed: Boolean(result.replayed),
     });
   }),
 );

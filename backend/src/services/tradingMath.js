@@ -96,6 +96,38 @@ function applyFill({ heldQuantity, heldAverage, delta, price }) {
   };
 }
 
+/**
+ * What a fill does to the cash balance.
+ *
+ * Orbit does not credit short-sale proceeds. Shorting $10,000 of BTC leaves the
+ * balance exactly where it was — the money is not the trader's to spend, it is
+ * owed back to whoever the coin was borrowed from. Only closing the short moves
+ * cash, by the profit or loss it booked.
+ *
+ * That makes the balance mean one thing and one thing only: money available to
+ * spend. Crediting the proceeds instead would show $110,000 against a $100,000
+ * account and leave margin to explain why $10,000 of it cannot be touched.
+ */
+function cashDelta({ heldQuantity, delta, price, realizedPnl }) {
+  const held = new D(heldQuantity ?? 0);
+  const change = new D(delta);
+  const fillPrice = new D(price);
+
+  if (change.isPositive()) {
+    // Buying. The part that covers a short costs nothing outright — no cash
+    // came in when it opened — so only its profit or loss lands. Whatever is
+    // left over buys coin, and that is paid for in full.
+    const covered = D.min(change, D.max(held.negated(), ZERO));
+    const bought = change.minus(covered);
+    return new D(realizedPnl).minus(bought.mul(fillPrice));
+  }
+
+  // Selling. Coin actually held returns what the market pays for it — cost and
+  // profit together. The remainder opens a short, which pays nothing.
+  const sold = D.min(change.abs(), D.max(held, ZERO));
+  return sold.mul(fillPrice);
+}
+
 /** True once the remaining size is too small to be worth a row. */
 function isFlat(quantity) {
   return new D(quantity).abs().lt(DUST);
@@ -107,13 +139,26 @@ function positionValue({ quantity, price }) {
 }
 
 /**
- * What the account is actually worth: cash plus every position at market.
- * Shorts subtract, so equity falls as a short moves against you — which is the
- * number margin is measured against.
+ * What a position adds to the account, given that shorts were never paid for.
+ *
+ * A long was bought with cash, so it is worth whatever the market pays for it.
+ * A short took no cash in, so the only thing it contributes is the profit or
+ * loss it is sitting on — which is what would land if it were closed now.
+ */
+function positionEquity({ quantity, averagePrice, price }) {
+  const size = new D(quantity);
+  if (!size.isNegative()) return size.mul(new D(price));
+  return size.mul(new D(price).minus(new D(averagePrice ?? price)));
+}
+
+/**
+ * What the account is actually worth: cash, plus longs at market, plus what the
+ * shorts have made or lost. Equity falls as a short moves against you — which
+ * is the number margin is measured against.
  */
 function equityOf({ cash, positions }) {
   return positions.reduce(
-    (total, position) => total.plus(positionValue(position)),
+    (total, position) => total.plus(positionEquity(position)),
     new D(cash),
   );
 }
@@ -129,6 +174,31 @@ function shortNotionalOf(positions) {
 const MAX_LEVERAGE = new D(1);
 // Below this the account is force-closed rather than allowed to go negative.
 const MAINTENANCE = new D("0.25");
+
+/**
+ * Whether the balance can actually pay for what this fill takes out.
+ *
+ * Checked before the fill is written, against the cash the order needs rather
+ * than the balance it would leave behind, so the error can name both figures.
+ * assertMargin still refuses a negative balance afterwards — this is the
+ * message, that is the invariant.
+ */
+function assertSufficientCash({ balance, delta }) {
+  const change = new D(delta);
+  // Only an outflow can overdraw: money coming in never needs covering.
+  if (!change.isNegative()) return;
+
+  const required = change.abs();
+  const available = new D(balance);
+
+  if (required.gt(available)) {
+    throw ApiError.badRequest(
+      `Insufficient balance. You need ${required.toFixed(2)} but only ` +
+        `${available.toFixed(2)} is available.`,
+      { required: required.toFixed(2), available: available.toFixed(2) },
+    );
+  }
+}
 
 /**
  * The rules a fill has to satisfy after it lands.
@@ -168,8 +238,11 @@ module.exports = {
   assertQuantity,
   signedDelta,
   applyFill,
+  cashDelta,
   isFlat,
   positionValue,
+  positionEquity,
+  assertSufficientCash,
   equityOf,
   shortNotionalOf,
   assertMargin,

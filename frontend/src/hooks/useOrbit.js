@@ -49,7 +49,14 @@ export function usePlaceOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: orbit.placeOrder,
+    /**
+     * A key per attempt, minted here rather than in the pages, so every caller
+     * — the ticket, the dashboard's close button, the trade page's — is covered
+     * without each having to remember. One mutation attempt is one order however
+     * many times the request reaches the server.
+     */
+    mutationFn: (order) =>
+      orbit.placeOrder({ ...order, idempotencyKey: order.idempotencyKey ?? crypto.randomUUID() }),
     onSuccess: () => {
       // A fill moves cash, holdings and history at once — refresh all three
       // rather than trying to patch the caches by hand.

@@ -127,14 +127,30 @@ export default function Trade() {
   const opensShort = side === "SELL" ? Math.max(quantity - longQuantity, 0) : 0;
   const newExposure = opensShort * (price ?? 0);
 
+  // What the order actually does to the balance, mirroring tradingMath's
+  // cashDelta: covering a short only books its P&L, and opening one moves
+  // nothing. Buying coin outright and selling a holding move the full value.
+  const shortQuantity = Math.max(-heldQuantity, 0);
+  const covered = side === "BUY" ? Math.min(quantity, shortQuantity) : 0;
+  const coverPnl =
+    covered && held ? (Number(held.averagePrice) - (price ?? 0)) * covered : 0;
+  const cashAfter =
+    side === "BUY"
+      ? cash + coverPnl - (quantity - covered) * (price ?? 0)
+      : cash + Math.min(quantity, longQuantity) * (price ?? 0);
+
+  const currentExposure = shortQuantity * (price ?? 0);
+
   // The same rules the server enforces, mirrored here so the button explains
-  // itself instead of the user discovering the limit by being rejected.
-  const overCash = side === "BUY" && spend > cash;
+  // itself instead of the user discovering the limit by being rejected. Buying
+  // is refused when it would overdraw the balance, which now includes a cover
+  // that loses more than the account has left.
+  const overCash = side === "BUY" && cashAfter < 0;
   const overMargin = newExposure > shortCapacity;
   const blocked = overCash || overMargin || spend <= 0 || !price || placeOrder.isPending;
 
   const warning = overCash
-    ? `You have ${formatUsd(cash)} in cash`
+    ? `That leaves you ${formatUsd(cashAfter)} — you have ${formatUsd(cash)} in cash`
     : overMargin
       ? `That would open ${formatUsd(newExposure)} of short exposure — you have ${formatUsd(shortCapacity)} of room`
       : null;
@@ -364,8 +380,12 @@ export default function Trade() {
                     : `No ${coin.ticker} held`}
                 </p>
               </Cell>
-              <Cell label="Available cash" value={formatUsd(cash)}>
-                <p className="text-xs text-faint">Short room {formatUsd(shortCapacity)}</p>
+              <Cell label="Available balance" value={formatUsd(cash)}>
+                <p className="text-xs text-faint">
+                  {currentExposure > 0
+                    ? `${formatUsd(currentExposure)} shorted · room ${formatUsd(shortCapacity)}`
+                    : `Short room ${formatUsd(shortCapacity)}`}
+                </p>
               </Cell>
             </CellRow>
           </div>
@@ -474,6 +494,13 @@ export default function Trade() {
               <span className="tabular text-foreground">{formatPrice(price)}</span>.
             </p>
             <p className="mt-1 text-foreground">{intent}</p>
+            {newExposure > 0 && (
+              <p className="mt-1 text-faint">
+                Short proceeds aren't added to your balance — you keep{" "}
+                {formatUsd(cash)} either way, and the profit or loss lands when
+                you buy it back.
+              </p>
+            )}
           </div>
 
           <label className="mt-4 block">
@@ -520,7 +547,17 @@ export default function Trade() {
             {[
               ["Quantity", `${quantity ? quantity.toFixed(6) : "0.000000"} ${coin.ticker}`],
               ["Order value", formatUsd(spend)],
-              ["Cash after", formatUsd(side === "BUY" ? cash - spend : cash + spend)],
+              // Only the part of the order that touches cash. Opening a short
+              // brings nothing in — the proceeds are owed back, not earned —
+              // so the balance sits still until the short is bought back.
+              ["Cash after", formatUsd(cashAfter)],
+              ...(newExposure > 0
+                ? [["Short proceeds", "Not credited — held against the position"]]
+                : []),
+              ...(heldQuantity < 0 && side === "BUY"
+                ? [["Books P&L on cover", signedUsd(coverPnl)]]
+                : []),
+              ["Short exposure after", formatUsd(currentExposure + newExposure)],
               ["Short room", formatUsd(shortCapacity)],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3 py-2">

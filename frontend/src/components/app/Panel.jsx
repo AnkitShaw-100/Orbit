@@ -27,10 +27,25 @@ export function Cell({ label, value, tone = "text-foreground", children }) {
   );
 }
 
-/** The row of cells the summary bands use, so every page's band rhymes. */
-export function CellRow({ children }) {
+/**
+ * The row of cells the summary bands use, so every page's band rhymes.
+ *
+ * `cols` is spelled out rather than derived from the child count because
+ * Tailwind only ships the classes it can see in the source.
+ */
+const CELL_COLUMNS = {
+  3: "sm:grid-cols-3",
+  // Four abreast is too tight for a tablet, so these break two-by-two first.
+  4: "grid-cols-2 lg:grid-cols-4",
+};
+
+export function CellRow({ cols = 3, children }) {
   return (
-    <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+    <div
+      className={`grid divide-line sm:divide-x sm:divide-y-0 ${
+        cols === 4 ? "divide-x divide-y" : "divide-y"
+      } ${CELL_COLUMNS[cols]}`}
+    >
       {children}
     </div>
   );

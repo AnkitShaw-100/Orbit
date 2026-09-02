@@ -38,7 +38,7 @@ const LOADED_AT = Date.now();
  * wash — that flood is reserved for the one page about the person rather than
  * the market. Here the surface stays neutral and the numbers carry the colour.
  */
-function SummaryBand({ name, days, totalValue, startingCash, cash, unrealised, totalReturn }) {
+function SummaryBand({ name, days, totalValue, startingCash, cash, shortNotional, unrealised, totalReturn }) {
   const ahead = totalValue >= startingCash;
 
   return (
@@ -80,16 +80,31 @@ function SummaryBand({ name, days, totalValue, startingCash, cash, unrealised, t
       </div>
 
       <div className="border-t border-line">
-        <CellRow>
-          <Cell label="Available cash" value={formatUsd(cash)}>
-            <p className="text-xs text-faint">Buying power</p>
+        <CellRow cols={4}>
+          {/* Available, shorted, unrealised: the three figures a short splits
+              an account into, kept apart so none of them has to stand in for
+              another. A short never touches the balance, so this is spendable
+              money outright rather than a number margin has to qualify. */}
+          <Cell label="Available balance" value={formatUsd(cash)}>
+            <p className="text-xs text-faint">Yours to spend — short proceeds excluded</p>
+          </Cell>
+          <Cell
+            label="Short position"
+            value={shortNotional > 0 ? formatUsd(shortNotional) : "None"}
+            tone={shortNotional > 0 ? "text-loss" : undefined}
+          >
+            <p className="text-xs text-faint">
+              {shortNotional > 0 ? "Owed back at market" : "Nothing shorted"}
+            </p>
           </Cell>
           <Cell
             label="Unrealised P&L"
             value={signedUsd(unrealised)}
             tone={unrealised >= 0 ? "text-gain" : "text-loss"}
           >
-            <p className="text-xs text-faint">Across open positions</p>
+            <p className="text-xs text-faint">
+              {shortNotional > 0 ? "Lands in your balance on close" : "Across open positions"}
+            </p>
           </Cell>
           <Cell label="Starting balance" value={formatUsd(startingCash)}>
             <p className="text-xs text-faint">The same for every account</p>
@@ -223,6 +238,7 @@ export default function Dashboard() {
         totalValue={totalValue}
         startingCash={startingCash}
         cash={Number(p.cash)}
+        shortNotional={Number(p.shortNotional)}
         unrealised={unrealised}
         totalReturn={totalReturn}
       />

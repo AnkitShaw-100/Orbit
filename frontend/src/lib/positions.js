@@ -58,7 +58,17 @@ export function markPortfolio(portfolio, prices) {
   const cash = Number(portfolio.cash);
   const startingCash = Number(portfolio.startingCash);
 
-  const positionsValue = holdings.reduce((sum, row) => sum + Number(row.value), 0);
+  // A long was paid for in cash, so it counts at market. A short took no cash
+  // in — Orbit does not credit short-sale proceeds — so all it contributes is
+  // the P&L it is sitting on. Same split as tradingMath's positionEquity.
+  const positionsValue = holdings.reduce(
+    (sum, row) =>
+      sum + Number(Number(row.quantity) < 0 ? row.unrealizedPnl : row.value),
+    0,
+  );
+  const longValue = holdings
+    .filter((row) => Number(row.quantity) > 0)
+    .reduce((sum, row) => sum + Number(row.value), 0);
   const unrealized = holdings.reduce((sum, row) => sum + Number(row.unrealizedPnl), 0);
   const totalValue = cash + positionsValue;
 
@@ -72,6 +82,7 @@ export function markPortfolio(portfolio, prices) {
     ...portfolio,
     holdings,
     positionsValue: positionsValue.toFixed(2),
+    longValue: longValue.toFixed(2),
     unrealizedPnl: unrealized.toFixed(2),
     totalValue: totalValue.toFixed(2),
     totalReturnPct: (((totalValue - startingCash) / startingCash) * 100).toFixed(2),

@@ -2,7 +2,7 @@ const { Prisma } = require("@prisma/client");
 const prisma = require("../lib/prisma");
 const env = require("../config/env");
 const market = require("./marketData.service");
-const { equityOf, shortNotionalOf, MAINTENANCE } = require("./tradingMath");
+const { equityOf, positionEquity, shortNotionalOf, MAINTENANCE } = require("./tradingMath");
 
 const D = Prisma.Decimal;
 
@@ -52,10 +52,20 @@ async function getPortfolio(userId) {
 
   const marked = positions.map((position) => ({
     quantity: position.quantity,
+    averagePrice: position.averagePrice,
     price: prices[position.symbol]?.price ?? position.averagePrice,
   }));
 
-  const positionsValue = holdings.reduce((sum, row) => sum.plus(row.value), new D(0));
+  // What the positions add to the account. A long counts at market; a short
+  // counts only for its P&L, because its sale proceeds were never credited to
+  // cash. Split out so totalValue is visibly cash plus this and nothing else.
+  const positionsValue = marked.reduce(
+    (sum, position) => sum.plus(positionEquity(position)),
+    new D(0),
+  );
+  const longValue = holdings
+    .filter((row) => row.side === "LONG")
+    .reduce((sum, row) => sum.plus(row.value), new D(0));
   const unrealized = holdings.reduce((sum, row) => sum.plus(row.unrealizedPnl), new D(0));
   const totalValue = equityOf({ cash, positions: marked });
   const shortNotional = shortNotionalOf(marked);
@@ -68,8 +78,13 @@ async function getPortfolio(userId) {
     : totalValue.div(shortNotional.mul(MAINTENANCE));
 
   return {
+    // Money free to spend. Nothing here is reserved or borrowed: a short never
+    // added to it, so what it says is what an order can use.
     cash: cash.toFixed(2),
     positionsValue: positionsValue.toFixed(2),
+    // The long book at market, reported apart from the shorts' P&L so the two
+    // can be shown as the different things they are.
+    longValue: longValue.toFixed(2),
     totalValue: totalValue.toFixed(2),
     unrealizedPnl: unrealized.toFixed(2),
     // Orbit's one fixed reference point: everyone starts at exactly $100,000.

@@ -78,9 +78,17 @@ model Order {
   status         OrderStatus @default(FILLED)
   createdAt      DateTime    @default(now()) @map("created_at")
 
+  /// Client-supplied key that makes a retry safe. A double-click, a dropped
+  /// response or an automatic retry sends the same key, and the second request
+  /// returns the first order instead of placing another one. Null for clients
+  /// that don't send one, and Postgres treats each null as distinct, so those
+  /// orders are unconstrained.
+  idempotencyKey String?     @map("idempotency_key")
+
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transaction Transaction?
 
+  @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
   @@map("orders")
 }

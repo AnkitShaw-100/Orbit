@@ -7,9 +7,11 @@ const {
   assertQuantity,
   signedDelta,
   applyFill,
+  cashDelta,
   isFlat,
   equityOf,
   shortNotionalOf,
+  assertSufficientCash,
   assertMargin,
 } = require("./tradingMath");
 
@@ -29,6 +31,34 @@ const {
  */
 
 /**
+ * Takes the account's write lock for the rest of the transaction.
+ *
+ * Without it two orders placed at the same instant both read the same balance,
+ * both decide they can afford it, and the second UPDATE overwrites the first —
+ * a textbook lost update, and on this table it spends the same money twice.
+ * Postgres runs READ COMMITTED by default, where an unlocked read blocks
+ * nothing, so the lock has to be taken explicitly.
+ *
+ * The wallet row is the account's mutex rather than one lock per table: every
+ * order goes through here and every order touches the wallet, so holding this
+ * one row serialises a user's fills without also serialising unrelated users.
+ */
+async function lockAccount(tx, userId) {
+  const [locked] = await tx.$queryRaw`
+    SELECT id FROM wallets WHERE user_id = ${userId}::uuid FOR UPDATE
+  `;
+  if (!locked) throw ApiError.notFound("No wallet for this account");
+}
+
+/** An order already placed under this key, with everything the caller returns. */
+function findByKey(client, userId, idempotencyKey) {
+  return client.order.findUnique({
+    where: { userId_idempotencyKey: { userId, idempotencyKey } },
+    include: { transaction: true },
+  });
+}
+
+/**
  * Values every position at the current market, substituting a known price for
  * one symbol — the fill price for the order being placed, since that trade
  * hasn't reached the price cache yet.
@@ -36,6 +66,7 @@ const {
 function markPositions(positions, prices, override = {}) {
   return positions.map((position) => ({
     quantity: position.quantity,
+    averagePrice: position.averagePrice,
     price:
       override.symbol === position.symbol
         ? override.price
@@ -43,15 +74,42 @@ function markPositions(positions, prices, override = {}) {
   }));
 }
 
-async function placeOrder({ userId, symbol, side, quantity, liquidation = false }) {
+async function placeOrder({
+  userId,
+  symbol,
+  side,
+  quantity,
+  liquidation = false,
+  idempotencyKey = null,
+}) {
   const requested = assertQuantity(quantity);
   const delta = signedDelta(side, requested);
+
+  // Cheap check outside the transaction so a replay of a long-settled order
+  // costs one indexed read rather than a lock. It is not the guarantee — the
+  // one inside the lock below is — just the fast path for the common case.
+  if (idempotencyKey) {
+    const previous = await findByKey(prisma, userId, idempotencyKey);
+    if (previous) return replayOf(previous, userId);
+  }
 
   // Server-side price. The client never supplies its own fill price.
   const executionPrice = new D(market.getExecutionPrice(symbol));
   const total = orderTotal(executionPrice, requested);
 
   return prisma.$transaction(async (tx) => {
+    // Before anything is read, so the balance and positions below cannot move
+    // underneath this transaction.
+    await lockAccount(tx, userId);
+
+    // Re-checked while holding the lock. Two clicks landing together both miss
+    // the fast path above; the second blocks here, and by the time it gets the
+    // lock the first has committed and is found.
+    if (idempotencyKey) {
+      const previous = await findByKey(tx, userId, idempotencyKey);
+      if (previous) return replayOf(previous, userId, tx);
+    }
+
     const wallet = await tx.wallet.findUnique({ where: { userId } });
     if (!wallet) throw ApiError.notFound("No wallet for this account");
 
@@ -65,16 +123,33 @@ async function placeOrder({ userId, symbol, side, quantity, liquidation = false 
       price: executionPrice,
     });
 
-    // Buying spends cash, selling returns it — including a short sale, whose
-    // proceeds are credited and then offset by the negative position.
-    const nextBalance = side === "BUY"
-      ? new D(wallet.balance).minus(total)
-      : new D(wallet.balance).plus(total);
+    // Buying spends cash and selling a holding returns it, but opening a short
+    // does neither: its proceeds are not the trader's to spend, so the balance
+    // does not move until the short is bought back and books its P&L.
+    const movement = cashDelta({
+      heldQuantity: existing?.quantity ?? 0,
+      delta,
+      price: executionPrice,
+      realizedPnl: result.realizedPnl,
+    });
+
+    // Refused before a single row is written, and named in full: what the order
+    // needs and what the account actually has. A liquidation is exempt for the
+    // same reason it is exempt from margin — it is the fix, not the breach.
+    if (!liquidation) {
+      assertSufficientCash({ balance: wallet.balance, delta: movement });
+    }
+
+    const nextBalance = new D(wallet.balance).plus(movement);
 
     // Margin is judged on the account after the fill lands, not before.
     const after = positions
       .filter((position) => position.symbol !== symbol)
-      .concat(isFlat(result.quantity) ? [] : [{ symbol, quantity: result.quantity }]);
+      .concat(
+        isFlat(result.quantity)
+          ? []
+          : [{ symbol, quantity: result.quantity, averagePrice: result.averagePrice }],
+      );
 
     const marked = markPositions(after, market.snapshot(), {
       symbol,
@@ -118,6 +193,7 @@ async function placeOrder({ userId, symbol, side, quantity, liquidation = false 
         executionPrice,
         total,
         status: "FILLED",
+        idempotencyKey,
       },
     });
 
@@ -135,6 +211,24 @@ async function placeOrder({ userId, symbol, side, quantity, liquidation = false 
 
     return { order, transaction, balance: nextBalance, liquidation };
   });
+}
+
+/**
+ * The answer a replayed request gets: the original order, unchanged, alongside
+ * the balance as it stands now. Flagged so the caller can tell a replay from a
+ * fresh fill rather than reporting the same trade to the user twice.
+ */
+async function replayOf(previous, userId, client = prisma) {
+  const wallet = await client.wallet.findUnique({ where: { userId } });
+  const { transaction, ...order } = previous;
+
+  return {
+    order,
+    transaction,
+    balance: new D(wallet?.balance ?? 0),
+    liquidation: false,
+    replayed: true,
+  };
 }
 
 function listOrders(userId, { limit = 50, symbol } = {}) {
