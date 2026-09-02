@@ -13,6 +13,8 @@
 export default function PositionActions({
   armed,
   pending = false,
+  /** Seconds the order limiter is still refusing for; 0 when it isn't. */
+  cooldown = 0,
   onAdd,
   onArm,
   onCancel,
@@ -27,10 +29,10 @@ export default function PositionActions({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={pending}
+          disabled={pending || cooldown > 0}
           className={`${base} bg-loss text-on-loss hover:brightness-110 disabled:opacity-60`}
         >
-          {pending ? "Closing…" : "Confirm close"}
+          {pending ? "Closing…" : cooldown > 0 ? `Wait ${cooldown}s` : "Confirm close"}
         </button>
         <button
           type="button"

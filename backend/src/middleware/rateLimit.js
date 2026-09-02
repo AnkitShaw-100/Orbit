@@ -67,7 +67,11 @@ const readLimiter = limiter({
 const orderLimiter = limiter({
   capacity: 10,
   perMinute: 30,
-  message: "Too many orders in a row. Wait a minute before trading again.",
+  // No duration in the copy. The bucket refills continuously, so the honest
+  // wait is whatever Retry-After says — usually a couple of seconds, not the
+  // minute a fixed-window message would have to claim. The client counts that
+  // header down on the button, and two sources for one number would disagree.
+  message: "Too many orders in a row. Slow down before placing another.",
 });
 
 /**

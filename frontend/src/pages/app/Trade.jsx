@@ -9,6 +9,7 @@ import { LiveDot } from "@/components/app/Toolbar";
 import { Loading } from "@/components/app/QueryState";
 import { useMarkets, usePlaceOrder, usePortfolio } from "@/hooks/useOrbit";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
+import { useRetryAfter } from "@/hooks/useRetryAfter";
 import { useTheme } from "@/hooks/useTheme";
 import { orbit } from "@/lib/api";
 import { formatPrice, formatUsd, formatVolume, signedPercent, signedUsd } from "@/lib/format";
@@ -45,6 +46,11 @@ export default function Trade() {
 
   const query = usePortfolio();
   const placeOrder = usePlaceOrder();
+
+  // Seconds the order limiter is still refusing for, 0 when it isn't. Every
+  // path that places an order reads this, so a refusal disables the ticket and
+  // the position buttons together rather than only the one that was clicked.
+  const cooldown = useRetryAfter(placeOrder.error);
 
   /**
    * The portfolio query polls slowly, so between refetches its P&L was frozen
@@ -147,7 +153,8 @@ export default function Trade() {
   // that loses more than the account has left.
   const overCash = side === "BUY" && cashAfter < 0;
   const overMargin = newExposure > shortCapacity;
-  const blocked = overCash || overMargin || spend <= 0 || !price || placeOrder.isPending;
+  const blocked =
+    overCash || overMargin || spend <= 0 || !price || placeOrder.isPending || cooldown > 0;
 
   const warning = overCash
     ? `That leaves you ${formatUsd(cashAfter)} — you have ${formatUsd(cash)} in cash`
@@ -289,6 +296,7 @@ export default function Trade() {
                     <PositionActions
                       armed={closing}
                       pending={placeOrder.isPending}
+                      cooldown={cooldown}
                       onAdd={() => addTo(holding.symbol, quantity)}
                       onArm={() => setCloseArmed(holding.symbol)}
                       onCancel={() => setCloseArmed(null)}
@@ -590,7 +598,10 @@ export default function Trade() {
 
           {(warning || placeOrder.isError) && (
             <p className="mt-3 rounded-xl border border-loss/30 bg-loss/10 px-3.5 py-2.5 text-[11px] leading-relaxed text-loss">
-              {warning ?? placeOrder.error.message}
+              {warning ??
+                (cooldown > 0
+                  ? `${placeOrder.error.message} Try again in ${cooldown}s.`
+                  : placeOrder.error.message)}
             </p>
           )}
 
@@ -622,7 +633,9 @@ export default function Trade() {
           >
             {placeOrder.isPending
               ? "Placing…"
-              : `${side === "BUY" ? "Buy" : "Sell"} ${coin.ticker}`}
+              : cooldown > 0
+                ? `Wait ${cooldown}s`
+                : `${side === "BUY" ? "Buy" : "Sell"} ${coin.ticker}`}
           </button>
 
           <p className="mt-3 text-[11px] leading-relaxed text-faint">

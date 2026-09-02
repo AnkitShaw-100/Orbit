@@ -3,12 +3,34 @@ import { supabase } from "./supabase";
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export class ApiError extends Error {
-  constructor(status, message, details) {
+  /**
+   * `retryAfter` is seconds, and only ever set on a 429. The server computes it
+   * from the tokens actually missing rather than a fixed window, so it is worth
+   * showing verbatim: the order limiter usually refuses for two seconds, not
+   * for the minute a generic message would imply.
+   */
+  constructor(status, message, details, retryAfter = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.details = details;
+    this.retryAfter = retryAfter;
   }
+}
+
+/** `Retry-After` in whole seconds, or null when absent or malformed. */
+function retryAfterOf(response) {
+  const header = response.headers.get("retry-after");
+  if (!header) return null;
+
+  // The header may also carry an HTTP date. Orbit only ever sends seconds, but
+  // a proxy in front of it might not, so parse defensively rather than showing
+  // a NaN countdown.
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return Math.max(0, Math.ceil(seconds));
+
+  const date = Date.parse(header);
+  return Number.isNaN(date) ? null : Math.max(0, Math.ceil((date - Date.now()) / 1000));
 }
 
 /**
@@ -41,6 +63,7 @@ export async function api(path, { method = "GET", body, auth = true } = {}) {
       response.status,
       payload?.error?.message ?? "Something went wrong. Try again.",
       payload?.error?.details,
+      response.status === 429 ? retryAfterOf(response) : null,
     );
   }
 
