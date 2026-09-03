@@ -1,4 +1,3 @@
-import CtaBand from "@/components/landing/CtaBand";
 import Faq from "@/components/landing/Faq";
 import FeatureGrid from "@/components/landing/FeatureGrid";
 import Footer from "@/components/landing/Footer";
@@ -34,8 +33,9 @@ export default function Home() {
       <HowItWorks />
       <SeamlessAccess ticker={btc} />
       <MarketWall tickers={tickers} />
+      {/* Faq closes the page itself — it renders the sign-up invitation
+          inside its own section so no hairline splits the two. */}
       <Faq />
-      <CtaBand />
       <Footer />
     </div>
   );

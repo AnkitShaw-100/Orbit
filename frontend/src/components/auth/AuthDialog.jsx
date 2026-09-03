@@ -1,10 +1,12 @@
 import { useId, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
+import { X } from "lucide-react";
 import OrbitMark from "@/components/OrbitMark";
 import Spinner from "@/components/Spinner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/context/authContext";
 import { celebrate } from "@/lib/celebrate";
+import { markWelcome } from "@/lib/welcome";
 
 /**
  * Signing in without leaving the page.
@@ -120,7 +122,13 @@ export default function AuthDialog({ mode }) {
     }
 
     // The account exists now, whether or not a session came back with it.
-    if (mode === "signup") celebrate();
+    if (mode === "signup") {
+      celebrate();
+      // Read by AppShell on the first signed-in screen this tab reaches. Set
+      // here rather than passed through navigation state, which a redirect
+      // through /login would drop — see lib/welcome.js.
+      markWelcome();
+    }
 
     // With email confirmation on, Supabase returns a user but no session.
     if (mode === "signup" && !data.session) {
@@ -137,6 +145,18 @@ export default function AuthDialog({ mode }) {
         showCloseButton={false}
         className="page max-w-[calc(100%-2rem)] gap-0 rounded-2xl border border-line bg-panel p-7 text-center ring-0 sm:max-w-[25rem]"
       >
+        {/* Escape and the backdrop already close this, but neither is visible.
+            A card with no way out that you can see reads as a wall, especially
+            to someone who only wanted to look around before signing up. */}
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close"
+          className="absolute top-3.5 right-3.5 grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/8 hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
+
         {/* The same lockup the navbar carries, so the card reads as Orbit's
             even though it covers the page the navbar is on. */}
         <div className="flex items-center justify-center gap-2">
@@ -155,7 +175,7 @@ export default function AuthDialog({ mode }) {
 
         <form onSubmit={handleSubmit} className="mt-7 space-y-4 text-left">
           {mode === "signup" && (
-            <Field label="Name" name="name" placeholder="Aryan" autoComplete="name" />
+            <Field label="Name" name="name" placeholder="Ankit" autoComplete="name" />
           )}
 
           <Field

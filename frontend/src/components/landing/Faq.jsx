@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { FiPlus } from "react-icons/fi";
+import CtaBand from "./CtaBand";
 
 const QUESTIONS = [
   {
@@ -123,6 +124,13 @@ export default function Faq() {
           }`}
         />
       </ul>
+
+      {/* The closing invitation lives inside this section rather than after it.
+          `.page > section + section` draws a hairline at every section
+          boundary, so as a section of its own it was fenced off from the
+          questions it answers — and the last objection and the answer to it
+          belong to the same moment. */}
+      <CtaBand />
     </section>
   );
 }

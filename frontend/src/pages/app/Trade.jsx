@@ -5,7 +5,7 @@ import CandleChart from "@/components/landing/CandleChart";
 import CoinCell, { SideBadge } from "@/components/app/CoinCell";
 import PositionActions from "@/components/app/PositionActions";
 import MarketSelect from "@/components/app/MarketSelect";
-import { Cell, CellRow, Panel } from "@/components/app/Panel";
+import { Panel } from "@/components/app/Panel";
 import { LiveDot } from "@/components/app/Toolbar";
 import { Loading } from "@/components/app/QueryState";
 import { useMarkets, usePlaceOrder, usePortfolio } from "@/hooks/useOrbit";
@@ -32,6 +32,30 @@ const RANGES = [
 const tickerOf = baseAsset;
 
 const QUANTITY = new Intl.NumberFormat("en-US", { maximumFractionDigits: 8 });
+
+/**
+ * One fact in the details panel.
+ *
+ * Label and value on the same line rather than stacked the way a Cell does it:
+ * the ticket column is 300px, and a band of three-abreast cells has nowhere to
+ * go at that width. The hint sits under the label so the numbers stay in one
+ * right-aligned column and can be scanned down.
+ */
+function Detail({ label, value, hint, tone = "text-foreground" }) {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">{label}</p>
+        {hint && <p className="mt-1 text-xs leading-relaxed text-faint">{hint}</p>}
+      </div>
+      <p
+        className={`tabular shrink-0 font-display text-base font-bold tracking-[-0.03em] ${tone}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
 
 /** Written once so the positions header and its rows cannot drift apart. */
 const POSITION_GRID = "lg:grid-cols-[1.6fr_1fr_1fr_1fr_1fr_13rem]";
@@ -241,7 +265,18 @@ export default function Trade() {
    * page cannot afford to do.
    */
   const positionsPanel = (
-    <Panel title="Open positions" bodyClassName="p-0">
+    // Grows to take whatever height the ticket column leaves over, so the page
+    // ends in one clean edge instead of a short panel with dead space beneath
+    // it. `min-h-0` because a flex child will not shrink below its content
+    // without it, which would push the panel past the bottom on a long list.
+    <Panel
+      title="Open positions"
+      bodyClassName="flex min-h-0 flex-1 flex-col p-0"
+      // Third on a phone, below the chart and the ticket. `flex-1` only bites
+      // from xl, where the wrapper is a real flex column — on a phone this is a
+      // grid item and sizes to its content.
+      className="order-3 flex min-h-0 flex-col xl:order-0 xl:flex-1"
+    >
       {portfolio.isPending ? (
         <Loading label="Loading positions" />
       ) : portfolio.data?.holdings.length ? (
@@ -310,10 +345,10 @@ export default function Trade() {
           </ul>
         </>
       ) : (
-        // A single line rather than a centred block: this is the last thing on
-        // the page, and an empty panel saying nothing does not deserve the
-        // height of one that lists positions.
-        <p className="px-5 py-4 text-sm text-muted-foreground sm:px-6">
+        // Centred in whatever height the panel has been stretched to, so an
+        // empty book reads as a deliberate resting state rather than as a
+        // panel that failed to fill itself.
+        <p className="grid flex-1 place-content-center px-5 py-8 text-center text-sm text-muted-foreground sm:px-6">
           No open positions yet.{" "}
           <span className="text-faint">
             Anything you buy or short appears here, with its live P&L and a one-click exit.
@@ -325,86 +360,50 @@ export default function Trade() {
 
   return (
     <div className="grid gap-4 p-4 sm:p-6 xl:grid-cols-[1fr_300px]">
-      <div className="min-w-0 space-y-4">
-        {/* The market band, built like the dashboard's summary: the picker and
-            the price you are about to trade at up top, the surrounding facts
-            in a banded row underneath. */}
-        {/* Deliberately not overflow-hidden: the market picker opens a menu
-            out of this band, and clipping the corners would clip that too.
-            Nothing inside paints a background, so the rounded corners hold
-            without it. */}
-        <section className="rounded-2xl border border-line bg-panel">
-          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 p-5 sm:p-6">
-            <div className="min-w-0">
-              <MarketSelect
-                symbols={listed.map((option) => option.symbol)}
-                value={coin.symbol}
-                prices={prices}
-                onChange={(next) => setParams({ symbol: next })}
-              />
-              <p className="mt-3 font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
-                Last price
-              </p>
-              <p
-                className={`tabular font-display text-3xl font-bold tracking-[-0.03em] ${
-                  isUp ? "text-gain" : "text-loss"
-                }`}
-              >
-                {formatPrice(price)}
-              </p>
-            </div>
+      {/* `contents` dissolves this wrapper on a phone so all four panels become
+          items of the page grid directly, which is the only way to interleave
+          the two columns — the ticket has to land between the chart and the
+          positions, and it lives in the other column. From xl the wrapper
+          becomes a real flex column again and the order classes reset. */}
+      <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-4">
+        {/* The chart leads the page, and carries the market it is drawing in
+            its own header — picker, live price and change together, the way a
+            terminal states them once directly above the candles. The account
+            facts that used to sit in a band up here now live in the details
+            panel beside the ticket, where they are read while sizing an order
+            rather than while reading the chart. */}
+        <Panel
+          className="order-1 xl:order-0"
+          bodyClassName="h-95 p-3 lg:h-110"
+          header={
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-5 gap-y-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+                <MarketSelect
+                  symbols={listed.map((option) => option.symbol)}
+                  value={coin.symbol}
+                  prices={prices}
+                  onChange={(next) => setParams({ symbol: next })}
+                />
 
-            <div className="flex items-end gap-8">
-              <div className="text-right leading-tight">
-                <p className="font-mono text-[11px] tracking-[0.14em] text-faint uppercase">
-                  24h change
-                </p>
-                <p
-                  className={`tabular font-display text-xl font-bold tracking-[-0.03em] ${
-                    isUp ? "text-gain" : "text-loss"
-                  }`}
-                >
-                  {signedPercent(ticker?.changePct)}
-                </p>
+                <div className="flex items-baseline gap-2.5">
+                  <span
+                    className={`tabular font-display text-xl font-bold tracking-[-0.03em] ${
+                      isUp ? "text-gain" : "text-loss"
+                    }`}
+                  >
+                    {formatPrice(price)}
+                  </span>
+                  <span
+                    className={`tabular text-xs font-semibold ${isUp ? "text-gain" : "text-loss"}`}
+                  >
+                    {signedPercent(ticker?.changePct)}
+                  </span>
+                </div>
+
+                <LiveDot status={status} />
               </div>
 
-              <LiveDot status={status} />
-            </div>
-          </div>
-
-          <div className="border-t border-line">
-            <CellRow>
-              <Cell label="24h volume" value={formatVolume(ticker?.quoteVolume)}>
-                <p className="text-xs text-faint">Traded on Binance</p>
-              </Cell>
-              <Cell
-                label="Your position"
-                value={heldQuantity ? QUANTITY.format(Math.abs(heldQuantity)) : "None"}
-              >
-                <p className="text-xs text-faint">
-                  {heldQuantity
-                    ? `${heldQuantity < 0 ? "Short" : "Long"} ${coin.ticker} · ${signedUsd(
-                        Number(held?.unrealizedPnl ?? 0),
-                      )}`
-                    : `No ${coin.ticker} held`}
-                </p>
-              </Cell>
-              <Cell label="Available balance" value={formatUsd(cash)}>
-                <p className="text-xs text-faint">
-                  {currentExposure > 0
-                    ? `${formatUsd(currentExposure)} shorted · room ${formatUsd(shortCapacity)}`
-                    : `Short room ${formatUsd(shortCapacity)}`}
-                </p>
-              </Cell>
-            </CellRow>
-          </div>
-        </section>
-
-        <Panel
-          title="Chart"
-          bodyClassName="h-95 p-3 lg:h-110"
-          action={
-            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
               {/* The position, restated where the eye already is: the chart
                   draws the entry line, this says what it is worth. */}
               {livePnl != null && (
@@ -435,6 +434,7 @@ export default function Trade() {
                     {option.label}
                   </button>
                 ))}
+                </div>
               </div>
             </div>
           }
@@ -465,8 +465,8 @@ export default function Trade() {
         {positionsPanel}
       </div>
 
-      <div className="space-y-4">
-        <Panel title="Place order">
+      <div className="contents xl:flex xl:flex-col xl:gap-4">
+        <Panel title="Place order" className="order-2 xl:order-0">
           <div
             role="radiogroup"
             aria-label="Order side"
@@ -566,8 +566,15 @@ export default function Trade() {
               ...(heldQuantity < 0 && side === "BUY"
                 ? [["Books P&L on cover", signedUsd(coverPnl)]]
                 : []),
-              ["Short exposure after", formatUsd(currentExposure + newExposure)],
-              ["Short room", formatUsd(shortCapacity)],
+              // Shorting figures only once shorting is actually in play. On a
+              // plain long they are two rows of zeroes between the reader and
+              // the button, and the details panel already carries the room.
+              ...(currentExposure > 0 || newExposure > 0
+                ? [
+                    ["Short exposure after", formatUsd(currentExposure + newExposure)],
+                    ["Short room", formatUsd(shortCapacity)],
+                  ]
+                : []),
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between gap-3 py-2">
                 <dt className="text-muted-foreground">{label}</dt>
@@ -644,6 +651,70 @@ export default function Trade() {
           <p className="mt-3 text-[11px] leading-relaxed text-faint">
             Orders execute against your virtual balance at the server's price.
           </p>
+        </Panel>
+
+        {/* The facts you check while sizing an order, kept beside the ticket
+            rather than above the chart: what the market is doing, what you
+            already hold in it, and what you have left to spend. */}
+        {/* The market is the panel's header rather than a first row inside it.
+            This sits at the bottom of a column taller than most windows, so
+            whichever edge of it you can see has to say which coin you are
+            looking at — a "Details" title would waste that line. */}
+        <Panel
+          className="order-4 xl:order-0"
+          bodyClassName="py-1"
+          header={
+            <div className="flex items-center justify-between gap-3">
+              <CoinCell symbol={coin.symbol} size="sm" />
+              <div className="shrink-0 text-right leading-tight">
+                <p
+                  className={`tabular font-display text-base font-bold tracking-[-0.03em] ${
+                    isUp ? "text-gain" : "text-loss"
+                  }`}
+                >
+                  {formatPrice(price)}
+                </p>
+                <p
+                  className={`tabular text-[11px] font-semibold ${isUp ? "text-gain" : "text-loss"}`}
+                >
+                  {signedPercent(ticker?.changePct)}
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <Detail
+            label="24h volume"
+            value={formatVolume(ticker?.quoteVolume)}
+            hint="Traded on Binance"
+          />
+          <Detail
+            label="Your position"
+            value={heldQuantity ? QUANTITY.format(Math.abs(heldQuantity)) : "None"}
+            tone={
+              heldQuantity
+                ? Number(held?.unrealizedPnl ?? 0) >= 0
+                  ? "text-gain"
+                  : "text-loss"
+                : "text-foreground"
+            }
+            hint={
+              heldQuantity
+                ? `${heldQuantity < 0 ? "Short" : "Long"} ${coin.ticker} · ${signedUsd(
+                    Number(held?.unrealizedPnl ?? 0),
+                  )}`
+                : `No ${coin.ticker} held`
+            }
+          />
+          <Detail
+            label="Available balance"
+            value={formatUsd(cash)}
+            hint={
+              currentExposure > 0
+                ? `${formatUsd(currentExposure)} shorted · room ${formatUsd(shortCapacity)}`
+                : `Short room ${formatUsd(shortCapacity)}`
+            }
+          />
         </Panel>
       </div>
     </div>

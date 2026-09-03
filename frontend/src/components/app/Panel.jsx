@@ -1,11 +1,21 @@
-export function Panel({ title, action, children, className = "", bodyClassName = "" }) {
+/**
+ * `header` replaces the title/action pair outright, for the one panel whose
+ * header is not a heading — the chart carries the market picker and the live
+ * price up there, and a `<select>` is not phrasing content that belongs inside
+ * an `<h2>`. Everything else keeps the plain title.
+ */
+export function Panel({ title, action, header, children, className = "", bodyClassName = "" }) {
   return (
     <section className={`rounded-2xl border border-line bg-panel ${className}`}>
-      {(title || action) && (
-        <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5 sm:px-6">
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-          {action}
-        </header>
+      {header ? (
+        <header className="border-b border-line px-5 py-3.5 sm:px-6">{header}</header>
+      ) : (
+        (title || action) && (
+          <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5 sm:px-6">
+            <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+            {action}
+          </header>
+        )
       )}
       <div className={`p-5 sm:p-6 ${bodyClassName}`}>{children}</div>
     </section>

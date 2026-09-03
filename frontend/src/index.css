@@ -121,28 +121,42 @@
 :root {
     /* Warm paper, not white. The dark theme's greys drift warm as they
        lighten; the light theme drifts warm as it darkens, so the two are the
-       same palette read from opposite ends. */
-    --surface-void: #F7F4EF;
-    --surface-panel: #FFFFFF;
-    --surface-panel-2: #F2EEE6;
-    --surface-line: #E4DED2;
+       same palette read from opposite ends.
+
+       The panel is deliberately NOT #FFFFFF. Pure white is the brightest thing
+       a screen can do, and spending it on a surface that covers most of the
+       page leaves nothing brighter to raise anything with — every panel sat at
+       the ceiling and the page read as one flat sheet. Pulling the panel off
+       white and dropping the ground further beneath it opens a real step
+       between them, so a card looks raised without needing a shadow to say so.
+       Same four roles as the dark theme, same ordering, just read from the
+       other end.
+
+       Neutral grey rather than the cream this used to be: the warm ground read
+       as beige across a whole page of it, which is a colour, and the shell is
+       meant to be colourless so gold stays the only thing on screen that is
+       trying to catch the eye. */
+    --surface-void: #E6E7E9;
+    --surface-panel: #F7F8F9;
+    --surface-panel-2: #EDEEF0;
+    --surface-line: #CFD1D6;
 
     /* Foreground is a warm near-black, never #000 — the app writes most of its
        secondary text as foreground/45, and pure black at 45% goes flat grey. */
-    --background: #F7F4EF;
-    --foreground: #191612;
-    --card: #FFFFFF;
-    --card-foreground: #191612;
+    --background: #E6E7E9;
+    --foreground: #16171A;
+    --card: #F7F8F9;
+    --card-foreground: #16171A;
     --popover: #FFFFFF;
-    --popover-foreground: #191612;
+    --popover-foreground: #16171A;
     --primary: #E3A72F;
     --primary-foreground: #191204;
     --secondary: #F2EEE6;
-    --secondary-foreground: #191612;
+    --secondary-foreground: #16171A;
     --muted: #F2EEE6;
-    --muted-foreground: #6B6459;
+    --muted-foreground: #5D6066;
     --accent: #F2EEE6;
-    --accent-foreground: #191612;
+    --accent-foreground: #16171A;
     --destructive: oklch(0.577 0.245 27.325);
     --border: #E4DED2;
     --input: #E4DED2;
@@ -154,15 +168,15 @@
     --chart-5: #38BDF8;
     --radius: 0.625rem;
     --sidebar: #FFFFFF;
-    --sidebar-foreground: #191612;
+    --sidebar-foreground: #16171A;
     --sidebar-primary: #E3A72F;
     --sidebar-primary-foreground: #191204;
     --sidebar-accent: #F2EEE6;
-    --sidebar-accent-foreground: #191612;
+    --sidebar-accent-foreground: #16171A;
     --sidebar-border: #E4DED2;
     --sidebar-ring: #E3A72F;
 
-    --text-faint: #736C60;
+    --text-faint: #63666C;
 
     --market-gain: #0B8F7B;
     --market-loss: #D13B33;
@@ -389,6 +403,16 @@
   --nav-h: 4.5rem;
 
   color-scheme: dark;
+}
+
+/* An in-page link lands a section under the sticky navbar unless the scroll
+   stops short of it. Applied to any element with an id rather than to the
+   sections by name, so a new anchor works the day it is added — and set in CSS
+   rather than in the scrolling code, so the browser restoring a fragment on a
+   cold load gets the same offset. The extra 1rem keeps the heading off the
+   navbar's underline instead of flush against it. */
+[id] {
+  scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
 
 /* Every section boundary gets the same hairline, applied by position rather

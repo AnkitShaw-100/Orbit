@@ -50,14 +50,55 @@ export default function SeamlessAccess({ ticker }) {
   return (
     <section className="section">
       <div className="shell grid overflow-hidden rounded-[26px] lg:grid-cols-[minmax(0,40%)_1fr]">
-        <div className="brand-wash relative border-b border-line px-6 py-10 sm:px-12 sm:py-14 lg:border-r lg:border-b-0 lg:py-20">
+        {/* The panel beside this one is dense with figures, and a column of
+            grey sentences cannot hold its own against that. So this half
+            speaks the same language: ruled rows at the same rhythm as the
+            mock's own stat header, and a numeric foot that rhymes with it
+            outright — faint label over a tabular value, the same anatomy. */}
+        <div className="brand-wash relative flex flex-col border-b border-line px-6 py-10 sm:px-12 sm:py-14 lg:border-r lg:border-b-0 lg:py-16">
           <h2 className="h2-section relative max-w-[15ch] text-foreground">
             The whole desk, in a browser tab
           </h2>
-          <p className="relative mt-5 max-w-[38ch] text-[15px] leading-relaxed text-muted-foreground sm:mt-6">
-            Chart, order ticket and open positions on one screen. Nothing to
-            install, nothing to fund — sign in and the market is already moving.
+          <p className="relative mt-5 max-w-[36ch] text-[15px] leading-relaxed text-muted-foreground">
+            Nothing to install, nothing to fund. Sign in and the market is
+            already moving.
           </p>
+
+          {/* Names the three panes in the mock, in the order they appear there,
+              so the column reads as a legend for the screenshot rather than a
+              second block of prose. */}
+          <dl className="relative mt-9 border-t border-line">
+            {[
+              ["Chart", "Binance candles, live, with your entry drawn across them."],
+              ["Order ticket", "Fills at the price the exchange is quoting."],
+              ["Open positions", "Live profit and loss, and a one-click exit."],
+            ].map(([term, detail]) => (
+              <div key={term} className="border-b border-line py-4">
+                <dt className="text-sm font-semibold text-foreground">{term}</dt>
+                <dd className="mt-1 max-w-[34ch] text-[13px] leading-relaxed text-muted-foreground">
+                  {detail}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          {/* The whole pitch, stated as three figures. Every one is literally
+              true, and together they answer the only question a newcomer
+              actually has about a trading product — what it will cost them. */}
+          <div className="relative mt-auto grid grid-cols-3 gap-6 pt-10">
+            {[
+              ["Starting balance", "$100,000.00"],
+              ["Commission", "$0.00"],
+              ["Minimum deposit", "$0.00"],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <p className="text-[10px] text-faint">{label}</p>
+                <p className="tabular mt-1 font-display text-base font-bold tracking-[-0.02em] text-foreground">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex bg-void p-3 sm:p-7">

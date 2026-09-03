@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router";
 import AppShell from "./components/app/AppShell";
 import RequireAuth from "./components/app/RequireAuth";
 import CustomCursor from "./components/CustomCursor";
+import ScrollToHash from "./components/ScrollToHash";
 import Dashboard from "./pages/app/Dashboard";
 import Markets from "./pages/app/Markets";
 import Profile from "./pages/app/Profile";
@@ -30,6 +31,8 @@ function Routing() {
 
   return (
     <>
+      <ScrollToHash />
+
       <Routes location={background ?? location}>
         <Route path="/" element={<Home />} />
 

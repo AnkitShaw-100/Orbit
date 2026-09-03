@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { LogOut, Menu, Moon, Search, Sun, Wallet, X } from "lucide-react";
 import Sidebar from "./Sidebar";
+import WelcomeCard from "./WelcomeCard";
 import Spinner from "@/components/Spinner";
 import { useAuth } from "@/context/authContext";
 import { useMe, usePortfolio } from "@/hooks/useOrbit";
 import { useTheme } from "@/hooks/useTheme";
 import { formatUsd } from "@/lib/format";
+import { takeWelcome } from "@/lib/welcome";
 
 const TITLES = {
   "/dashboard": "Dashboard",
@@ -34,6 +36,10 @@ export default function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+
+  // Set by signup, read and cleared exactly once per tab. Survives the
+  // /login round trip that RequireAuth can make while the session settles.
+  const [welcome, setWelcome] = useState(takeWelcome);
   const { signOut } = useAuth();
   const me = useMe();
   const portfolio = usePortfolio();
@@ -153,6 +159,18 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      {/* Shown here rather than on Dashboard so it greets a new account
+          wherever the signup sent them — a confirmation link can land on any
+          protected route. Falls back to the documented starting balance while
+          the portfolio request is still in flight, so the number never blinks
+          in as a zero. */}
+      {welcome && (
+        <WelcomeCard
+          amount={portfolio.data?.startingCash ?? 100000}
+          onDismiss={() => setWelcome(false)}
+        />
+      )}
     </div>
   );
 }
