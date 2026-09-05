@@ -3,7 +3,9 @@
     Orbit's mark: the ring and its centre, the same shape the sidebar and the
     landing nav draw. The geometry is identical to src/components/OrbitMark.jsx
     — a static file served from /public cannot import the component, so the two
-    are kept in step by hand. Change one, change the other.
+    are kept in step by hand. Change one, change the other — and then run
+    `npm run icons`, which redraws the same geometry as the PNG and ICO
+    fallbacks for the browsers that ignore an SVG favicon.
 
     On a dark plate rather than transparent, so the gold reads at 16px against
     a light browser tab as well as a dark one. The colours are the literal

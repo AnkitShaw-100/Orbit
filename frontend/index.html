@@ -2,9 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orbit</title>
+    <meta
+      name="description"
+      content="Real-time crypto paper trading. Trade live spot markets with $100,000 of virtual money, including short selling with server-enforced margin."
+    />
+
+    <!-- The SVG is the one that renders in a modern tab, and it is listed
+         first so those browsers take it. Everything after it is a fallback for
+         somewhere that ignores SVG: Safari, search results, bookmark bars and
+         link-preview scrapers. Regenerate the raster set with `npm run icons`
+         after any change to the mark. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+    <link rel="icon" sizes="any" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- The address bar on mobile. Dark either way: the plate behind the mark
+         is --color-ink, and a light bar under a dark app reads as a seam. -->
+    <meta name="theme-color" content="#0A0A0A" />
 
     <!-- Applied before the first paint, and before React loads. Setting the
          theme from a component would render the wrong one for a frame, which

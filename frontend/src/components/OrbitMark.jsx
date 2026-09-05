@@ -7,8 +7,10 @@
  * weight, so the two never looked like the same logo. One drawing, one weight,
  * everywhere.
  *
- * Geometry is duplicated verbatim in public/favicon.svg — a static file cannot
- * import this — so any change here needs the same change there.
+ * Geometry is duplicated verbatim in public/favicon.svg and in
+ * scripts/generate-icons.mjs — neither a static file nor a build script can
+ * import this — so any change here needs the same change in the SVG, followed
+ * by `npm run icons` to redraw the PNG and ICO fallbacks.
  */
 export default function OrbitMark({ className = "size-7", title }) {
   return (
