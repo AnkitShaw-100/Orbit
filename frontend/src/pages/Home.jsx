@@ -8,6 +8,7 @@ import MarketWall from "@/components/landing/MarketWall";
 import MarketsTable from "@/components/landing/MarketsTable";
 import Navbar from "@/components/landing/Navbar";
 import SeamlessAccess from "@/components/landing/SeamlessAccess";
+import Testimonials from "@/components/landing/Testimonials";
 import TickerTape from "@/components/landing/TickerTape";
 import { useOrbitPrices } from "@/hooks/useOrbitPrices";
 
@@ -31,6 +32,7 @@ export default function Home() {
       <MarketsTable tickers={tickers} />
       <FeatureGrid />
       <HowItWorks />
+      <Testimonials />
       <SeamlessAccess ticker={btc} />
       <MarketWall tickers={tickers} />
       {/* Faq closes the page itself — it renders the sign-up invitation
